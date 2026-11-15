@@ -3,7 +3,6 @@ plugins {
     id("org.jetbrains.kotlin.jvm")
     id("org.jetbrains.kotlin.plugin.compose")
     id("org.jetbrains.compose")
-    application
 }
 
 java {
@@ -14,19 +13,41 @@ kotlin {
     compilerOptions { jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17) }
 }
 
-application {
-    applicationName = "binumre"
-    mainClass.set("dk.binumre.desktop.MainKt")
-}
-
 dependencies {
     implementation(project(":core"))
     implementation("org.apache.pdfbox:pdfbox:3.0.3")
-    // Alle PC-platforme, så den samme pakke (installDist/distZip) kan køres på Windows, Linux og Mac
-    implementation(compose.desktop.windows_x64)
-    implementation(compose.desktop.linux_x64)
-    implementation(compose.desktop.macos_x64)
-    implementation(compose.desktop.macos_arm64)
+    // Pakkerne bygges på hvert styresystem for sig (se .github/workflows/build.yml)
+    implementation(compose.desktop.currentOs)
     implementation(compose.material3)
     testImplementation("junit:junit:4.13.2")
+}
+
+// Selvstændige pakker med indbygget Java-runtime – brugeren skal ikke installere noget.
+//   gradlew :desktop:createDistributable   -> build/compose/binaries/main/app/BiNumreGenerator/ (mappe med .exe)
+//   gradlew :desktop:packageMsi            -> installationsfil til Windows (kun på Windows)
+compose.desktop {
+    application {
+        mainClass = "dk.binumre.desktop.MainKt"
+        nativeDistributions {
+            targetFormats(
+                org.jetbrains.compose.desktop.application.dsl.TargetFormat.Msi,
+                org.jetbrains.compose.desktop.application.dsl.TargetFormat.Dmg,
+                org.jetbrains.compose.desktop.application.dsl.TargetFormat.Deb,
+            )
+            packageName = "BiNumreGenerator"
+            packageVersion = "1.0.0"
+            description = "Startnumre til orienteringsløb"
+            vendor = "BiNumreGenerator"
+            modules("java.desktop", "java.prefs", "java.instrument", "jdk.unsupported", "java.xml", "java.naming", "java.net.http", "jdk.crypto.ec", "jdk.charsets", "jdk.localedata")
+            windows {
+                menu = true
+                menuGroup = "BiNumreGenerator"
+                shortcut = true
+                dirChooser = true
+                perUserInstall = true
+                // Samme id i alle versioner, så en ny version erstatter den gamle
+                upgradeUuid = "6f0c7a52-3c1e-4d1b-9a55-2b8e4f3d7c11"
+            }
+        }
+    }
 }

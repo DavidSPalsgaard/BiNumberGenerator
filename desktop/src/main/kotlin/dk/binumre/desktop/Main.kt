@@ -17,10 +17,10 @@ import java.time.ZoneId
 import kotlin.system.exitProcess
 
 private val USAGE = """
-    Brug: binumre                        Åbner programmets vindue
-          binumre --gui [<startliste> ...] [--project <fil.json>]
+    Brug: BiNumreGenerator                        Åbner programmets vindue
+          BiNumreGenerator --gui [<startliste> ...] [--project <fil.json>]
                                          Åbner vinduet med startlisten/projektet indlæst
-          binumre [valg] <startliste> [<startliste etape 2> ...]
+          BiNumreGenerator [valg] <startliste> [<startliste etape 2> ...]
                                          Skriver PDF'en direkte (kommandolinje)
 
     Startlisten er IOF XML 3.0 / 2.0.3 (fx fra MeOS), Excel (.xlsx) eller CSV.

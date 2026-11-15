@@ -20,14 +20,27 @@ IOF XML 3.0 / 2.0.3 (MeOS, OE, Eventor), Excel (.xlsx), CSV og OFeed (QR-linket 
 løbet → Integrationer → O Checklist). Koden i `startlist/` og `ofeed/` er kopieret fra SI Startinfo
 og udvidet med tur, holdnavn og banelængde. Løbere uden startnummer springes over.
 
-## Brug
+## Hent og kør (Windows)
+Under **Releases → Seneste udgave** på GitHub ligger to filer, som bygges automatisk ved hver
+ændring på `main` (`.github/workflows/build.yml`):
+- `BiNumreGenerator-windows.zip` – pak ud og kør `BiNumreGenerator.exe`. Intet skal installeres;
+  Java-runtime følger med i mappen. Mappen `eksempler` har startlister til afprøvning.
+- `BiNumreGenerator-1.0.0.msi` – installerer i brugerens egen mappe med startmenu og genvej
+  (kræver ikke administrator).
+
+Windows viser måske "Windows beskyttede din pc", fordi programmet ikke er kodesigneret endnu:
+klik "Flere oplysninger" → "Kør alligevel".
+
+## Byg selv
+Kræver JDK 17 eller nyere (kun for at bygge – ikke for at køre den færdige pakke).
 ```
-gradlew :desktop:run                # starter programmets vindue
-gradlew :desktop:installDist        # -> desktop/build/install/binumre/bin/binumre(.bat)
+gradlew :desktop:run                    # starter programmets vindue
+gradlew :desktop:createDistributable    # -> desktop/build/compose/binaries/main/app/BiNumreGenerator/
+gradlew :desktop:packageMsi             # -> .msi (kun på Windows); packageDeb/packageDmg på Linux/Mac
 ```
-Kræver JDK 17 eller nyere. Uden argumenter åbner `binumre` vinduet; med argumenter er det
-kommandolinjen (se nedenfor). `binumre --gui startliste.xml [--project loeb.json]` åbner vinduet
-med startlisten og projektet indlæst.
+Pakken bygges til det styresystem, den bygges på. Uden argumenter åbner programmet vinduet; med
+argumenter er det kommandolinjen (se nedenfor). `BiNumreGenerator --gui startliste.xml [--project
+loeb.json]` åbner vinduet med startlisten og projektet indlæst.
 
 ### Programmets vindue
 - **Startliste:** indlæs IOF XML, Excel eller CSV, eller hent fra OFeed (QR-link). Ved
@@ -50,12 +63,15 @@ med startlisten og projektet indlæst.
   Manglende tekster vises på engelsk.
 
 ### Kommandolinje
+Kommandolinjen er den samme programfil med argumenter (`bin/BiNumreGenerator` på Linux og Mac;
+på Windows er `.exe`-filen bygget uden konsolvindue, så brug `gradlew :desktop:run --args="..."`
+for at se udskrifterne).
 ```
-binumre startliste.xml -o numre.pdf --distance S1=400m --distance S2=1,2km
-binumre stafet.xml --type relay --lang sv
-binumre etape1.xml etape2.xml --stage Lørdag --stage Søndag --distance 1:400m --distance 2:S1=600m
-binumre --ofeed "<QR-link>" --project loeb.json
-binumre --help
+BiNumreGenerator startliste.xml -o numre.pdf --distance S1=400m --distance S2=1,2km
+BiNumreGenerator stafet.xml --type relay --lang sv
+BiNumreGenerator etape1.xml etape2.xml --stage Lørdag --stage Søndag --distance 1:400m --distance 2:S1=600m
+BiNumreGenerator --ofeed "<QR-link>" --project loeb.json
+BiNumreGenerator --help
 ```
 Udskrift: to A5 pr. A4-ark med skærelinje (`--sheet a4x2`, standard) eller ét A5 pr. side (`--sheet a5`).
 
@@ -102,5 +118,6 @@ måler teksten ens) er dækket af tests; selve vinduet er afprøvet i hånden me
 1. ~~Import, datamodel, layout og PDF for alle tre skabeloner (kommandolinje)~~
 2. ~~Grafisk brugerflade (Compose Multiplatform) med editor til grafik og tabel til at rette/vælge løbere~~
 3. Direkte forbindelse til MeOS
-4. Installationspakker til Windows, Linux og Mac
+4. ~~Installationspakke til Windows (zip uden installation og .msi, bygget på GitHub)~~ –
+   kodesignering samt pakker til Linux og Mac mangler
 5. Android-app (genbruger `core/` med sin egen `BibCanvas`)
