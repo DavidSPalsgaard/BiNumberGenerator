@@ -112,7 +112,7 @@ Udskrift: to A5 pr. A4-ark med skærelinje (`--sheet a4x2`, standard) eller ét 
 - `infoFields`, `sharedStartList`, `printed`, `ofeed`: felter i løberens felt, én liste til alle
   etaper, startnumre der er udskrevet, og OFeed-forbindelse pr. startliste (link og adgangskode –
   gem ikke projektfilen offentligt).
-- Hjælpesiden til hjemmesiden: `docs/hjaelp.md`.
+- Hjælpesiden til hjemmesiden: `docs/hjaelp.md`. Projektets samlede viden (krav, beslutninger, læring): `docs/PROJEKT.md`.
 - Programmets ikon tegnes af `desktop/icons/lav_ikon.py` (Pillow).
 - `distances`: afstand til start pr. startsted; nøglen `""` gælder alle andre startsteder.
 - `language`: sprog på startnummeret – engelsk, dansk og 22 andre europæiske sprog
