@@ -24,7 +24,13 @@ object PdfWriter {
 
     /** [graphicsDir]: mappen som grafikfilernes stier er relative til (projektfilens mappe). */
     fun write(bibs: List<Bib>, project: BibProject, out: File, graphicsDir: File? = null) {
-        PDDocument().use { doc ->
+        document(bibs, project, graphicsDir).use { it.save(out) }
+    }
+
+    /** Dokumentet med startnumrene – til PDF-fil eller direkte udskrift ([Printer]). Kalderen lukker det. */
+    fun document(bibs: List<Bib>, project: BibProject, graphicsDir: File? = null): PDDocument {
+        val doc = PDDocument()
+        try {
             val fonts = mapOf(
                 BibFont.REGULAR to loadFont(doc, "DejaVuSans.ttf"),
                 BibFont.BOLD to loadFont(doc, "DejaVuSans-Bold.ttf"),
@@ -55,8 +61,11 @@ object PdfWriter {
                     }
                 }
             }
-            doc.save(out)
+        } catch (e: Throwable) {
+            doc.close()
+            throw e
         }
+        return doc
     }
 
     private fun loadFont(doc: PDDocument, name: String): PDFont =
@@ -133,6 +142,41 @@ private class PdfCanvas(
         val w = img.width * scale
         val h = img.height * scale
         cs.drawImage(img, px(x + (width - w) / 2), py(y + (height - h) / 2 + h), px(w), px(h))
+    }
+
+    override fun polygon(xs: DoubleArray, ys: DoubleArray, color: Int) {
+        if (xs.isEmpty()) return
+        val (r, g, b) = rgb(color)
+        cs.setNonStrokingColor(r, g, b)
+        cs.moveTo(px(xs[0]), py(ys[0]))
+        for (i in 1 until xs.size) cs.lineTo(px(xs[i]), py(ys[i]))
+        cs.closePath()
+        cs.fill()
+    }
+
+    override fun circle(cx: Double, cy: Double, r: Double, width: Double, color: Int, fill: Boolean) {
+        val (cr, cg, cb) = rgb(color)
+        // Fire Bézier-kurver
+        val k = 0.5523 * r
+        val x = px(cx)
+        val y = py(cy)
+        val rr = px(r)
+        val kk = px(k)
+        cs.moveTo(x + rr, y)
+        cs.curveTo(x + rr, y + kk, x + kk, y + rr, x, y + rr)
+        cs.curveTo(x - kk, y + rr, x - rr, y + kk, x - rr, y)
+        cs.curveTo(x - rr, y - kk, x - kk, y - rr, x, y - rr)
+        cs.curveTo(x + kk, y - rr, x + rr, y - kk, x + rr, y)
+        cs.closePath()
+        if (fill) {
+            cs.setNonStrokingColor(cr, cg, cb)
+            cs.fill()
+        } else {
+            cs.setStrokingColor(cr, cg, cb)
+            cs.setLineWidth(px(width))
+            cs.setLineDashPattern(floatArrayOf(), 0f)
+            cs.stroke()
+        }
     }
 
     override fun rotated180(cx: Double, cy: Double, block: () -> Unit) {

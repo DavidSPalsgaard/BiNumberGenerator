@@ -19,6 +19,7 @@ import org.jetbrains.skia.Image
 import org.jetbrains.skia.MipmapMode
 import org.jetbrains.skia.Paint
 import org.jetbrains.skia.PaintMode
+import org.jetbrains.skia.Path
 import org.jetbrains.skia.Rect
 import org.jetbrains.skia.Surface
 import org.jetbrains.skia.Typeface
@@ -118,6 +119,21 @@ class SkiaBibCanvas(
             Rect.makeXYWH(px(x + (width - w) / 2), px(y + (height - h) / 2), px(w), px(h)),
             FilterMipmap(FilterMode.LINEAR, MipmapMode.LINEAR), null, true,
         )
+    }
+
+    override fun polygon(xs: DoubleArray, ys: DoubleArray, color: Int) {
+        if (xs.isEmpty()) return
+        val path = Path().apply {
+            moveTo(px(xs[0]), px(ys[0]))
+            for (i in 1 until xs.size) lineTo(px(xs[i]), px(ys[i]))
+            closePath()
+        }
+        canvas.drawPath(path, paint(color))
+    }
+
+    override fun circle(cx: Double, cy: Double, r: Double, width: Double, color: Int, fill: Boolean) {
+        val p = paint(color).apply { if (!fill) { mode = PaintMode.STROKE; strokeWidth = px(width) } }
+        canvas.drawCircle(px(cx), px(cy), px(r), p)
     }
 
     override fun rotated180(cx: Double, cy: Double, block: () -> Unit) {

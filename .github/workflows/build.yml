@@ -41,7 +41,7 @@ jobs:
           cp -r desktop/build/compose/binaries/main/app/BiNumreGenerator "$pak/Program"
           cp desktop/build/compose/binaries/main/msi/*.msi "$pak/Installation/"
           cp core/src/test/resources/*_eksempel.xml "$pak/Testfiler/"
-          cp testpakke/startliste_eksempel.* testpakke/logo_eksempel.png testpakke/stafet_projekt.json "$pak/Testfiler/"
+          cp testpakke/startliste_eksempel.* testpakke/flerdages_alle_etaper.xml testpakke/logo_eksempel.png testpakke/stafet_projekt.json "$pak/Testfiler/"
           cp testpakke/TESTVEJLEDNING.txt testpakke/*.bat "$pak/"
           ls -R "$pak" | head -40
           powershell -Command "Compress-Archive -Path '$pak' -DestinationPath ud/BiNumreGenerator-testpakke.zip"

@@ -15,6 +15,12 @@ interface BibCanvas {
     fun rect(x: Double, y: Double, width: Double, height: Double, color: Int)
     fun line(x1: Double, y1: Double, x2: Double, y2: Double, width: Double, color: Int = 0x000000)
 
+    /** Udfyldt mangekant gennem punkterne ([xs] og [ys] lige lange). */
+    fun polygon(xs: DoubleArray, ys: DoubleArray, color: Int)
+
+    /** Cirkel: udfyldt, eller kun omridset med stregbredden [width]. */
+    fun circle(cx: Double, cy: Double, r: Double, width: Double, color: Int, fill: Boolean = false)
+
     /** Tegner billedet så stort som muligt inden for rammen uden at ændre forholdet. */
     fun image(file: String, x: Double, y: Double, width: Double, height: Double)
 

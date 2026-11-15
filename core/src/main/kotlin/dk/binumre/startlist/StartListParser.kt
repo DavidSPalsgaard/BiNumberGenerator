@@ -82,19 +82,23 @@ object StartListParser {
                 courseLength = classLength,
                 startName = startName,
             )
-            // Flerdagsløb: første Start (som O Checklist – én konkurrence pr. fil)
-            val st = ps.child("Start")
-            if (st == null) {
+            // Flerdagesløb i én fil: ét <Start raceNumber="n"> pr. etape
+            val starts = ps.children("Start")
+            if (starts.isEmpty()) {
                 out += base
                 continue
             }
-            val entry = base.copy(
-                bib = st.child("BibNumber").text(),
-                start = times.parse(st.child("StartTime").text()),
-                course = st.path("Course", "Name").text().ifEmpty { classCourse },
-                courseLength = st.path("Course", "Length").text().toDoubleOrNull()?.toInt() ?: classLength,
-            )
-            out += withCards(entry, st)
+            for (st in starts) {
+                val entry = base.copy(
+                    bib = st.child("BibNumber").text(),
+                    start = times.parse(st.child("StartTime").text()),
+                    course = st.path("Course", "Name").text().ifEmpty { classCourse },
+                    courseLength = st.path("Course", "Length").text().toDoubleOrNull()?.toInt() ?: classLength,
+                    race = st.getAttribute("raceNumber").trim().toIntOrNull()
+                        ?: if (starts.size > 1) starts.indexOf(st) + 1 else null,
+                )
+                out += withCards(entry, st)
+            }
         }
 
         for (ts in cs.children("TeamStart")) {

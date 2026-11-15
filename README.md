@@ -46,24 +46,26 @@ argumenter er det kommandolinjen (se nedenfor). `BiNumreGenerator --gui startlis
 loeb.json]` åbner vinduet med startlisten og projektet indlæst.
 
 ### Programmets vindue
-- **Startliste:** indlæs IOF XML, Excel eller CSV, eller hent fra OFeed (QR-link). Ved
-  flerdagesløb indlæses én fil pr. etape (vælges flere filer på én gang, bliver det et
-  flerdagesløb). Tabellen kan søges i og filtreres på klasse; klik på en løber for at rette
-  oplysningerne (fx give et manglende startnummer). Fluebenet afgør, om løberen udskrives –
-  fluebenet i overskriften gælder alle viste, så en hel klasse fravælges ved at filtrere på den
-  først. Løbere uden startnummer er markeret med rødt og tælles i bunden af vinduet.
-- **Opsætning:** skabelon, løbets navn, sprog på startnummeret, navneformat, tidszone, afstand
-  til start pr. startsted, etapernes overskrifter, farve pr. tur, arkformat og sortering.
-- **Layout og grafik:** forhåndsvisning af startnummeret – tegnet med samme kode og skrifter som
-  PDF'en. Indsæt op til 10 billeder (PNG/JPG), træk dem på plads, og træk i et hjørne for at
-  ændre størrelsen (eller skriv målene i mm). Pilene bladrer mellem løberne.
-- **Gem projekt** gemmer opsætningen som JSON (grafikstier relative til projektfilen, så mappen
-  kan flyttes). Startlisten og rettelser i den gemmes ikke – ret helst i løbsprogrammet og
-  indlæs igen. **Skriv PDF** laver udskriften.
+- **Startskærm:** vælg løbstype – enkeltløb, stafet eller flerdagesløb (med antal etaper) – eller
+  åbn et gemt projekt.
+- **Startliste:** indlæs IOF XML, Excel eller CSV, eller hent fra OFeed. Flerdagesløb: én liste pr.
+  etape, eller "Én startliste til alle etaper" (en IOF XML-fil med `raceNumber` pr. start giver hver
+  etape sin starttid). Løberne matches på tværs af etaper på startnummer, derefter SI-brik, derefter
+  navn og klub. Tabellen kan søges i og filtreres; klik på en løber for at rette. Fluebenet afgør, om
+  løberen kommer med; printerikonet udskriver kun den løber; "Ny" markerer dem der ikke er udskrevet.
+- **Opsætning:** løbstype, navn, antal etaper, sprog på startnummeret, navneformat, tidszone,
+  afstand til start pr. startsted, etapernes overskrifter, farve pr. tur, arkformat og sortering.
+- **Design:** forhåndsvisning tegnet med samme kode og skrifter som udskriften. Alle elementer –
+  nummer, navn, klub, hold, tur, klasse, starttid, bane, SI-nummer, stregkode, løbets navn,
+  løberens felt (vendt) og foldehjørner med sikkerhedsnål – kan slås til/fra, flyttes og ændres i
+  størrelse med musen, med tekst- og baggrundsfarve pr. element. Vilkårligt mange billeder.
+- **Udskriv** sender direkte til en printer (styresystemets printerdialog); vælg alle, kun dem der
+  ikke er udskrevet før (nytilkomne), eller én løber. **Eksportér PDF** gemmer det samme som PDF.
+- **Gem projekt** gemmer opsætningen, layoutet og hvad der er udskrevet som JSON (grafikstier
+  relative til projektfilen). Startlisten og rettelser i den gemmes ikke.
 - **Sprog:** programmets tekster ligger i `desktop/src/main/resources/i18n/<sprogkode>.properties`
   (UTF-8). Dansk og engelsk er oversat; et nyt sprog tilføjes ved at oversætte `en.properties`
-  til en fil med en af sprogkoderne fra `BibTexts.languages` – så dukker det selv op i menuen.
-  Manglende tekster vises på engelsk.
+  til en fil med en af sprogkoderne fra `BibTexts.languages`. Manglende tekster vises på engelsk.
 
 ### Kommandolinje
 Kommandolinjen er den samme programfil med argumenter (`bin/BiNumreGenerator` på Linux og Mac;
@@ -91,9 +93,13 @@ Udskrift: to A5 pr. A4-ark med skærelinje (`--sheet a4x2`, standard) eller ét 
   "stages": [ { "label": "", "distances": { "S1": "400 m", "": "350 m" } } ]
 }
 ```
-- `graphics`: 0-10 billeder (PNG/JPG), mål i mm fra startnummerets øverste venstre hjørne
+- `graphics`: billeder (PNG/JPG), mål i mm fra startnummerets øverste venstre hjørne
   (210 × 148,5 mm). Stien er relativ til projektfilen. Billedet skaleres ind i rammen og ligger
   under teksten (men over stafettens farvede bånd).
+- `elements`: startnummerets elementer (`kind`, `x`, `y`, `width`, `height`, `visible`, `rotated`,
+  `align`, evt. `color`/`background` som `#RRGGBB`). Udeladt = standardlayoutet for løbstypen.
+- `infoFields`, `sharedStartList`, `printed`: felter i løberens felt, én liste til alle etaper,
+  og startnumre der er udskrevet.
 - `distances`: afstand til start pr. startsted; nøglen `""` gælder alle andre startsteder.
 - `language`: sprog på startnummeret – engelsk, dansk og 22 andre europæiske sprog
   (`layout/BibTexts.kt`). "Afstand til start", "Tur" og "Etape" er oversat uden gennemsyn af

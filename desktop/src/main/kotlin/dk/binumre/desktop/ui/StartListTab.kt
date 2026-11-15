@@ -1,7 +1,10 @@
 package dk.binumre.desktop.ui
 
+import androidx.compose.foundation.VerticalScrollbar
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -12,19 +15,24 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.VerticalScrollbar
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.rememberScrollbarAdapter
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Badge
 import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -39,8 +47,6 @@ import androidx.compose.material3.TriStateCheckbox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -48,6 +54,8 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.state.ToggleableState
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -64,59 +72,70 @@ private val startListExtensions = listOf("xml", "xlsx", "csv", "txt")
 @Composable
 fun StartListTab(state: AppState, dialogs: FileDialogs) {
     val s = state.strings
-    val multiday = state.project.type == BibType.MULTIDAY
     var current by remember { mutableStateOf(0) }
     var query by remember { mutableStateOf("") }
     var cls by remember { mutableStateOf<String?>(null) }
     var onlyMissing by remember { mutableStateOf(false) }
+    var onlyNew by remember { mutableStateOf(false) }
     var editing by remember { mutableStateOf<Int?>(null) }
-    var ofeed by remember { mutableStateOf(false) }
+    var ofeedSlot by remember { mutableStateOf<Int?>(null) }
 
-    val listIndex = current.coerceIn(0, maxOf(0, state.lists.size - 1))
-    val list = state.lists.getOrNull(listIndex)
+    val slots = state.slotCount
+    val slot = current.coerceIn(0, slots - 1)
+    val list = state.lists.getOrNull(slot)
     if (cls != null && list?.classes?.contains(cls) != true) cls = null
+    fun load(at: Int) {
+        state.loadFiles(dialogs.open(s["dialog.startlist"], startListExtensions, multiple = slots > 1), at)
+        current = at
+    }
 
-    Column(Modifier.fillMaxSize().padding(16.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            Button(onClick = {
-                val before = state.lists.size
-                state.loadFiles(dialogs.open(s["dialog.startlist"], startListExtensions, multiple = true))
-                current = if (state.project.type == BibType.MULTIDAY) before.coerceAtMost(maxOf(0, state.lists.size - 1)) else 0
-            }) { Text(s[if (multiday && state.lists.isNotEmpty()) "list.addStage" else "list.load"]) }
-            OutlinedButton(onClick = { ofeed = true }) { Text(s["list.ofeed"]) }
-            state.lists.forEachIndexed { i, l ->
-                val used = multiday || i == 0
-                FilterChip(
-                    selected = i == listIndex,
-                    onClick = { current = i },
-                    label = {
-                        val name = if (multiday) s.format("list.stage", i + 1) + ": " + l.source else l.source
-                        Text(name + if (used) "" else " (${s["list.notUsed"]})", maxLines = 1)
-                    },
-                    trailingIcon = {
-                        Icon(Icons.Default.Close, contentDescription = s["remove"], modifier = Modifier.clickable { state.removeList(i) })
-                    },
+    Column(Modifier.fillMaxSize().padding(20.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+        // Pladser til startlister: én, eller én pr. etape
+        Row(Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            for (i in 0 until slots) {
+                SlotCard(
+                    title = if (slots > 1) state.project.stage(i).label.ifEmpty { s.format("list.stage", i + 1) }
+                    else s[if (state.project.type == BibType.MULTIDAY) "list.allStages" else "list.startlist"],
+                    file = state.lists.getOrNull(i)?.let { "${it.source} · ${s.format("list.rows", it.entries.size)}" },
+                    selected = i == slot && slots > 1,
+                    emptyText = s["list.none"],
+                    onSelect = { current = i },
+                    onLoad = { load(i) },
+                    onOFeed = { ofeedSlot = i },
+                    onRemove = { state.removeList(i) },
+                    s = s,
                 )
             }
         }
 
         if (list == null) {
-            Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                Text(s["list.empty"], Modifier.widthIn(max = 520.dp), color = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
+            EmptyState(state, onLoad = { load(slot) })
         } else {
             val entries = list.entries
-            val shown = remember(entries, query, cls, onlyMissing) { TableLogic.filter(entries, query, cls, onlyMissing) }
-            val relay = state.project.type == BibType.RELAY
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                OutlinedTextField(query, { query = it }, label = { Text(s["list.search"]) }, singleLine = true, modifier = Modifier.width(260.dp))
-                Dropdown("", cls, listOf<String?>(null) + list.classes, { it ?: s["list.allClasses"] }) { cls = it }
-                Row(Modifier.clickable { onlyMissing = !onlyMissing }, verticalAlignment = Alignment.CenterVertically) {
-                    Checkbox(onlyMissing, { onlyMissing = it })
-                    Text(s["list.onlyMissing"])
+            val type = state.project.type
+            val printed = state.project.printed
+            // Ved flerdagesløb kan nummeret stå på en anden etape: brug løberens nummer fra startnumrene
+            val bibs = state.bibSet.bibs
+            val numbers = remember(entries, bibs, type) {
+                if (type == BibType.MULTIDAY) entries.map { TableLogic.resolvedNumber(it, bibs) } else entries.map { it.bib.trim() }
+            }
+            val shown = remember(entries, numbers, query, cls, onlyMissing, onlyNew, printed) {
+                TableLogic.filter(entries, query, cls, false).filter { i ->
+                    (!onlyMissing || numbers[i].isEmpty()) && (!onlyNew || TableLogic.entryKey(entries[i], type, numbers[i]) !in printed)
                 }
+            }
+            val relay = type == BibType.RELAY
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                OutlinedTextField(
+                    query, { query = it }, placeholder = { Text(s["list.search"], maxLines = 1, overflow = TextOverflow.Ellipsis) }, singleLine = true,
+                    leadingIcon = { Icon(Icons.Default.Search, null) }, modifier = Modifier.width(280.dp),
+                    shape = RoundedCornerShape(24.dp),
+                )
+                Dropdown("", cls, listOf<String?>(null) + list.classes, { it ?: s["list.allClasses"] }) { cls = it }
+                FilterChip(onlyMissing, { onlyMissing = !onlyMissing }, label = { Text(s["list.onlyMissing"]) })
+                if (printed.isNotEmpty()) FilterChip(onlyNew, { onlyNew = !onlyNew }, label = { Text(s["list.onlyNew"]) })
                 Spacer(Modifier.weight(1f))
-                val missing = entries.count { it.bib.isEmpty() && !it.excluded }
+                val missing = entries.indices.count { numbers[it].isEmpty() && !entries[it].excluded }
                 Text(
                     s.format("list.summary", shown.size, entries.size, entries.count { !it.excluded }, missing),
                     color = if (missing > 0) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
@@ -124,41 +143,51 @@ fun StartListTab(state: AppState, dialogs: FileDialogs) {
                 )
             }
 
-            CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides Dp.Unspecified) {
-                // Overskrift: afkrydsningen vælger/fravælger alle viste (fx en hel klasse)
-                val included = shown.count { !entries[it].excluded }
-                val shownSet = remember(shown) { shown.toHashSet() }
-                Row(
-                    Modifier.fillMaxWidth().padding(end = 10.dp).background(MaterialTheme.colorScheme.surfaceVariant).padding(horizontal = 8.dp).height(36.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    TriStateCheckbox(
-                        state = when (included) {
-                            0 -> ToggleableState.Off
-                            shown.size -> ToggleableState.On
-                            else -> ToggleableState.Indeterminate
-                        },
-                        onClick = {
-                            val exclude = included == shown.size
-                            state.updateEntries(listIndex) { i, e -> if (i in shownSet) e.copy(excluded = exclude) else e }
-                        },
-                        modifier = Modifier.width(40.dp),
-                    )
-                    for ((key, weight) in columns(relay)) Cell(s[key], weight, bold = true)
-                    Spacer(Modifier.width(40.dp))
-                }
-                Box(Modifier.weight(1f)) {
-                    val scroll = rememberLazyListState()
-                    LazyColumn(Modifier.fillMaxSize().padding(end = 10.dp), state = scroll) {
-                        items(shown, key = { it }) { i ->
-                            val e = entries[i]
-                            EntryRow(state, e, relay, onToggle = { on ->
-                                state.updateEntries(listIndex) { j, x -> if (j == i) x.copy(excluded = !on) else x }
-                            }, onEdit = { editing = i })
-                            HorizontalDivider(color = MaterialTheme.colorScheme.surfaceVariant)
-                        }
+            Column(
+                Modifier.weight(1f).fillMaxWidth().background(MaterialTheme.colorScheme.surface, RoundedCornerShape(12.dp))
+                    .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(12.dp)),
+            ) {
+                CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides Dp.Unspecified) {
+                    val included = shown.count { !entries[it].excluded }
+                    val shownSet = remember(shown) { shown.toHashSet() }
+                    Row(
+                        Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surfaceContainer, RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp))
+                            .padding(start = 8.dp, end = 18.dp).height(40.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        TriStateCheckbox(
+                            state = when (included) {
+                                0 -> ToggleableState.Off
+                                shown.size -> ToggleableState.On
+                                else -> ToggleableState.Indeterminate
+                            },
+                            onClick = {
+                                val exclude = included == shown.size
+                                state.updateEntries(slot) { i, e -> if (i in shownSet) e.copy(excluded = exclude) else e }
+                            },
+                            modifier = Modifier.width(40.dp),
+                        )
+                        for ((key, weight) in columns(relay)) Cell(s[key], weight, bold = true)
+                        Spacer(Modifier.width(80.dp))
                     }
-                    VerticalScrollbar(rememberScrollbarAdapter(scroll), Modifier.align(Alignment.CenterEnd))
+                    Box(Modifier.weight(1f)) {
+                        val scroll = rememberLazyListState()
+                        LazyColumn(Modifier.fillMaxSize().padding(end = 10.dp), state = scroll) {
+                            items(shown, key = { it }) { i ->
+                                val e = entries[i]
+                                val number = numbers[i]
+                                val key = TableLogic.entryKey(e, type, number)
+                                EntryRow(
+                                    state, e, number, relay, isNew = printed.isNotEmpty() && key.isNotEmpty() && key !in printed,
+                                    onToggle = { on -> state.updateEntries(slot) { j, x -> if (j == i) x.copy(excluded = !on) else x } },
+                                    onEdit = { editing = i },
+                                    onPrint = if (number.isNotEmpty() && !e.excluded) ({ state.printRequest = PrintScope.One(key) }) else null,
+                                )
+                                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                            }
+                        }
+                        VerticalScrollbar(rememberScrollbarAdapter(scroll), Modifier.align(Alignment.CenterEnd))
+                    }
                 }
             }
         }
@@ -166,16 +195,65 @@ fun StartListTab(state: AppState, dialogs: FileDialogs) {
 
     val edit = editing
     if (edit != null && list != null && edit in list.entries.indices) {
-        EditDialog(state, list.entries[edit], state.dateOf(listIndex), state.project.type == BibType.RELAY, onClose = { editing = null }) { changed ->
-            state.updateEntries(listIndex) { j, x -> if (j == edit) changed else x }
+        EditDialog(state, list.entries[edit], state.dateOf(slot), state.project.type == BibType.RELAY, onClose = { editing = null }) { changed ->
+            state.updateEntries(slot) { j, x -> if (j == edit) changed else x }
             editing = null
         }
     }
-    if (ofeed) OFeedDialog(state) { ofeed = false }
+    ofeedSlot?.let { at -> OFeedDialog(state, at) { ofeedSlot = null; current = at } }
+}
+
+@Composable
+private fun SlotCard(
+    title: String, file: String?, selected: Boolean, emptyText: String,
+    onSelect: () -> Unit, onLoad: () -> Unit, onOFeed: () -> Unit, onRemove: () -> Unit, s: Strings,
+) {
+    val shape = RoundedCornerShape(12.dp)
+    Column(
+        Modifier.widthIn(min = 240.dp, max = 320.dp)
+            .background(if (selected) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface, shape)
+            .border(if (selected) 2.dp else 1.dp, if (selected) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outlineVariant, shape)
+            .clickable(onClick = onSelect).padding(12.dp),
+        verticalArrangement = Arrangement.spacedBy(6.dp),
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(title, style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
+            if (file != null) {
+                CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides Dp.Unspecified) {
+                    IconButton(onClick = onRemove, Modifier.size(24.dp)) { Icon(Icons.Default.Close, s["remove"], Modifier.size(16.dp)) }
+                }
+            }
+        }
+        Text(
+            file ?: emptyText, style = MaterialTheme.typography.bodySmall, maxLines = 1, overflow = TextOverflow.Ellipsis,
+            color = if (file == null) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            FilledTonalButton(onClick = onLoad, contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 12.dp)) {
+                Icon(AppIcons.Upload, null, Modifier.size(16.dp)); Spacer(Modifier.width(6.dp)); Text(s["list.file"])
+            }
+            TextButton(onClick = onOFeed) {
+                Icon(AppIcons.Cloud, null, Modifier.size(16.dp)); Spacer(Modifier.width(6.dp)); Text("OFeed")
+            }
+        }
+    }
+}
+
+@Composable
+private fun EmptyState(state: AppState, onLoad: () -> Unit) {
+    val s = state.strings
+    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(14.dp)) {
+            MiniBib("?")
+            Text(s["list.emptyTitle"], style = MaterialTheme.typography.titleLarge)
+            Text(s["list.empty"], Modifier.widthIn(max = 520.dp), color = MaterialTheme.colorScheme.onSurfaceVariant, textAlign = androidx.compose.ui.text.style.TextAlign.Center)
+            Button(onClick = onLoad) { Icon(AppIcons.Upload, null, Modifier.size(18.dp)); Spacer(Modifier.width(8.dp)); Text(s["list.load"]) }
+        }
+    }
 }
 
 private fun columns(relay: Boolean): List<Pair<String, Float>> = listOf(
-    "col.bib" to 0.6f, "col.name" to 2.2f, "col.club" to 1.8f, "col.class" to 0.9f, "col.card" to 1f,
+    "col.bib" to 0.7f, "col.name" to 2.2f, "col.club" to 1.8f, "col.class" to 0.9f, "col.card" to 1f,
     "col.start" to 0.9f, "col.course" to 0.7f, "col.startName" to 0.7f,
 ) + if (relay) listOf("col.team" to 1.6f, "col.leg" to 0.5f) else emptyList()
 
@@ -189,22 +267,35 @@ private fun RowScope.Cell(text: String, weight: Float, bold: Boolean = false, di
 }
 
 @Composable
-private fun EntryRow(state: AppState, e: StartEntry, relay: Boolean, onToggle: (Boolean) -> Unit, onEdit: () -> Unit) {
-    val missing = e.bib.isEmpty() && !e.excluded
+private fun EntryRow(state: AppState, e: StartEntry, number: String, relay: Boolean, isNew: Boolean, onToggle: (Boolean) -> Unit, onEdit: () -> Unit, onPrint: (() -> Unit)?) {
+    val missing = number.isEmpty() && !e.excluded
     Row(
         Modifier.fillMaxWidth()
-            .background(if (missing) MaterialTheme.colorScheme.errorContainer else MaterialTheme.colorScheme.background)
-            .clickable(onClick = onEdit).padding(horizontal = 8.dp).height(32.dp),
+            .background(if (missing) MaterialTheme.colorScheme.errorContainer else MaterialTheme.colorScheme.surface)
+            .clickable(onClick = onEdit).padding(horizontal = 8.dp).height(36.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         Checkbox(!e.excluded, onToggle, Modifier.width(40.dp))
         val values = listOf(
-            e.bib, e.displayName(state.project.nameFormat), e.club, e.cls, e.card?.toString().orEmpty(),
+            number, e.displayName(state.project.nameFormat), e.club, e.cls, e.card?.toString().orEmpty(),
             TableLogic.time(e.start, state.zone), e.course, e.startName,
         ) + if (relay) listOf(e.teamName, e.leg) else emptyList()
-        columns(relay).forEachIndexed { i, (_, weight) -> Cell(values[i], weight, bold = i == 0, dim = e.excluded) }
+        columns(relay).forEachIndexed { i, (_, weight) ->
+            if (i == 0 && isNew) {
+                Row(Modifier.weight(weight).padding(horizontal = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+                    Text(values[0], fontWeight = FontWeight.Bold, style = MaterialTheme.typography.bodyMedium)
+                    Spacer(Modifier.width(4.dp))
+                    Badge(containerColor = MaterialTheme.colorScheme.tertiary) { Text(state.strings["list.new"]) }
+                }
+            } else Cell(values[i], weight, bold = i == 0, dim = e.excluded || (i == 0 && e.bib.isEmpty()))
+        }
+        Box(Modifier.width(40.dp)) {
+            if (onPrint != null) IconButton(onClick = onPrint) {
+                Icon(AppIcons.Print, contentDescription = state.strings["list.printOne"], tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(20.dp))
+            }
+        }
         IconButton(onClick = onEdit, modifier = Modifier.width(40.dp)) {
-            Icon(Icons.Default.Edit, contentDescription = state.strings["list.edit"], tint = MaterialTheme.colorScheme.onSurfaceVariant)
+            Icon(Icons.Default.Edit, contentDescription = state.strings["list.edit"], tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(20.dp))
         }
     }
 }
@@ -267,7 +358,7 @@ private fun EditDialog(state: AppState, entry: StartEntry, date: java.time.Local
 }
 
 @Composable
-private fun OFeedDialog(state: AppState, onClose: () -> Unit) {
+private fun OFeedDialog(state: AppState, slot: Int, onClose: () -> Unit) {
     val s = state.strings
     val scope = rememberCoroutineScope()
     var link by remember { mutableStateOf("") }
@@ -288,7 +379,7 @@ private fun OFeedDialog(state: AppState, onClose: () -> Unit) {
                 scope.launch {
                     val result = withContext(Dispatchers.IO) { runCatching { state.fetchOFeed(link, password) } }
                     busy = false
-                    result.onSuccess { state.addLists(listOf(it)); onClose() }
+                    result.onSuccess { state.addLists(listOf(it), slot); onClose() }
                         .onFailure { state.error = it.message ?: it.toString() }
                 }
             }) { Text(s[if (busy) "ofeed.fetching" else "ofeed.fetch"]) }

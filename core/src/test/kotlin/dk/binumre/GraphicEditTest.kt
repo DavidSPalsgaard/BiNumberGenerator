@@ -6,7 +6,7 @@ import dk.binumre.layout.Handle
 import dk.binumre.model.BibBuilder
 import dk.binumre.model.BibProject
 import dk.binumre.model.BibType
-import dk.binumre.model.Graphic
+import dk.binumre.model.Frame
 import dk.binumre.startlist.StartEntry
 import dk.binumre.startlist.StartList
 import org.junit.Assert.assertEquals
@@ -14,8 +14,8 @@ import org.junit.Assert.assertNull
 import org.junit.Test
 
 class GraphicEditTest {
-    private val a = Graphic("a.png", 10.0, 10.0, 40.0, 20.0)
-    private val b = Graphic("b.png", 30.0, 20.0, 40.0, 20.0)
+    private val a = Frame(10.0, 10.0, 40.0, 20.0)
+    private val b = Frame(30.0, 20.0, 40.0, 20.0)
 
     @Test
     fun rammerØversteGrafikOgDenValgtesHjørner() {
@@ -27,6 +27,9 @@ class GraphicEditTest {
         assertEquals(0 to Handle.SE, GraphicEdit.hit(listOf(a, b), 51.0, 31.0, 0, 2.0))
         assertEquals(0 to Handle.NW, GraphicEdit.hit(listOf(a, b), 9.0, 9.0, 0, 2.0))
         assertNull(GraphicEdit.hit(listOf(a, b), 9.0, 9.0, null, 2.0))
+        // Et lille element oven på et stort gribes først
+        val small = Frame(20.0, 15.0, 5.0, 5.0)
+        assertEquals(1 to Handle.MOVE, GraphicEdit.hit(listOf(a, small, b), 22.0, 17.0, null, 2.0))
     }
 
     @Test
@@ -41,19 +44,23 @@ class GraphicEditTest {
     @Test
     fun hjørnerÆndrerStørrelsen() {
         assertEquals(a.copy(width = 50.0, height = 25.0), GraphicEdit.drag(a, Handle.SE, 10.0, 5.0))
-        assertEquals(Graphic("a.png", 5.0, 5.0, 45.0, 25.0), GraphicEdit.drag(a, Handle.NW, -5.0, -5.0))
-        assertEquals(Graphic("a.png", 10.0, 5.0, 50.0, 25.0), GraphicEdit.drag(a, Handle.NE, 10.0, -5.0))
-        assertEquals(Graphic("a.png", 5.0, 10.0, 45.0, 25.0), GraphicEdit.drag(a, Handle.SW, -5.0, 5.0))
-        // Mindst 5 mm, og ikke ud over kanten
-        assertEquals(a.copy(width = 5.0, height = 5.0), GraphicEdit.drag(a, Handle.SE, -500.0, -500.0))
+        assertEquals(Frame(5.0, 5.0, 45.0, 25.0), GraphicEdit.drag(a, Handle.NW, -5.0, -5.0))
+        assertEquals(Frame(10.0, 5.0, 50.0, 25.0), GraphicEdit.drag(a, Handle.NE, 10.0, -5.0))
+        assertEquals(Frame(5.0, 10.0, 45.0, 25.0), GraphicEdit.drag(a, Handle.SW, -5.0, 5.0))
+        // Mindst 3 mm, og ikke ud over kanten
+        assertEquals(a.copy(width = 3.0, height = 3.0), GraphicEdit.drag(a, Handle.SE, -500.0, -500.0))
         assertEquals(a.copy(width = BibLayout.WIDTH - 10, height = BibLayout.HEIGHT - 10), GraphicEdit.drag(a, Handle.SE, 500.0, 500.0))
-        assertEquals(Graphic("a.png", 45.0, 25.0, 5.0, 5.0), GraphicEdit.drag(a, Handle.NW, 500.0, 500.0))
+        assertEquals(Frame(47.0, 27.0, 3.0, 3.0), GraphicEdit.drag(a, Handle.NW, 500.0, 500.0))
+        // Talfelter
+        assertEquals(Frame(170.0, 0.0, 40.0, 3.0), GraphicEdit.clamp(Frame(500.0, -4.0, 40.0, 1.0)))
     }
 
     @Test
     fun nytBilledeFårBilledetsForhold() {
-        assertEquals(Graphic("logo.png", 8.0, 8.0, 40.0, 20.0), GraphicEdit.place("logo.png", 400, 200, 0))
-        assertEquals(Graphic("logo.png", 20.0, 20.0, 40.0, 60.0), GraphicEdit.place("logo.png", 100, 1000, 2))
+        assertEquals(Frame(8.0, 8.0, 40.0, 20.0), GraphicEdit.place(400, 200, 0))
+        assertEquals(Frame(20.0, 20.0, 40.0, 60.0), GraphicEdit.place(100, 1000, 2))
+        // Vilkårligt mange billeder: de forskydes i ring og holdes på startnummeret
+        assertEquals(Frame(8.0, 8.0, 40.0, 20.0), GraphicEdit.place(400, 200, 12))
     }
 
     // ---------- Fravalgte løbere ----------

@@ -31,6 +31,8 @@ data class StartEntry(
     val status: String = "",
     /** Fravalgt i brugerfladen: løberen får ikke noget startnummer. */
     val excluded: Boolean = false,
+    /** Flerdagesløb i én fil (IOF XML "raceNumber"): hvilken etape linjen gælder; null = alle. */
+    val race: Int? = null,
 ) {
     /** Løberen er registreret som startet (status fra OFeed, fx sat af O Checklist ved starten). */
     val started: Boolean get() = status.isNotEmpty() && status !in NOT_STARTED

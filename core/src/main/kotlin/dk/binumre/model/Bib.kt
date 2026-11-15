@@ -29,6 +29,9 @@ data class Bib(
 ) {
     fun displayName(format: dk.binumre.startlist.NameFormat): String =
         StartEntry(given = given, family = family, name = name).displayName(format)
+
+    /** Entydig nøgle: nummeret (og turen ved stafet). Bruges til at huske hvad der er udskrevet. */
+    val key: String get() = if (leg.isEmpty()) number else "$number/$leg"
 }
 
 /** Resultatet af at lave startnumre: numrene og hvor mange (ikke fravalgte) løbere der blev sprunget over uden startnummer. */
@@ -36,14 +39,24 @@ data class BibSet(val bibs: List<Bib>, val withoutNumber: Int)
 
 object BibBuilder {
 
-    /** Laver startnumre fra én startliste (enkeltløb, stafet) eller én pr. etape (flerdagesløb). */
-    fun build(project: BibProject, lists: List<StartList>, classes: Set<String> = emptySet()): BibSet {
-        require(lists.isNotEmpty()) { "Ingen startliste" }
+    /**
+     * Laver startnumre fra én startliste (enkeltløb, stafet) eller én pr. etape (flerdagesløb; null = etapen
+     * mangler endnu). Ved flerdagesløb med [BibProject.sharedStartList] bruges den første liste til alle etaper –
+     * har den "raceNumber" pr. start (IOF XML), tages hver etapes linjer derfra.
+     */
+    fun build(project: BibProject, lists: List<StartList?>, classes: Set<String> = emptySet()): BibSet {
+        require(lists.any { it != null }) { "Ingen startliste" }
         fun wanted(e: StartEntry) = classes.isEmpty() || e.cls in classes
+        fun stageEntries(list: StartList?, stage: Int) =
+            list?.entries.orEmpty().filter { wanted(it) && (it.race == null || it.race == stage + 1) }
         val all = when (project.type) {
-            BibType.SINGLE -> single(lists[0].entries.filter(::wanted))
-            BibType.RELAY -> relay(lists[0].entries.filter(::wanted))
-            BibType.MULTIDAY -> multiday(lists.map { l -> l.entries.filter(::wanted) })
+            BibType.SINGLE -> single(stageEntries(lists[0], 0))
+            BibType.RELAY -> relay(stageEntries(lists[0], 0))
+            BibType.MULTIDAY -> {
+                val shared = project.sharedStartList
+                val count = maxOf(project.stageCount, if (shared) 1 else lists.size)
+                multiday((0 until count).map { i -> stageEntries(if (shared) lists[0] else lists.getOrNull(i), i) })
+            }
         }
         val numbered = all.filter { it.number.isNotEmpty() }
         return BibSet(sort(numbered, project.sortBy), all.size - numbered.size)
@@ -74,18 +87,20 @@ object BibBuilder {
         return if (leg.isEmpty() || m.groupValues[2] == leg) m.groupValues[1] else bib.trim()
     }
 
-    /** Samme løber på tværs af etaper: samme SI-brik, ellers samme navn og klub. */
+    /** Samme løber på tværs af etaper: samme startnummer, ellers samme SI-brik, ellers samme navn og klub. */
     private fun multiday(lists: List<List<StartEntry>>): List<Bib> {
         class Runner(var entry: StartEntry, val stages: Array<BibStage?>, var number: String, var excluded: Boolean = false)
         val runners = mutableListOf<Runner>()
+        val byBib = mutableMapOf<String, Runner>()
         val byCard = mutableMapOf<Long, Runner>()
         val byPerson = mutableMapOf<String, Runner>()
         lists.forEachIndexed { i, entries ->
             for (e in entries) {
-                val r = e.card?.let { byCard[it] } ?: byPerson[personKey(e)]
+                val r = e.bib.trim().ifEmpty { null }?.let { byBib[it] } ?: e.card?.let { byCard[it] } ?: byPerson[personKey(e)]
                     ?: Runner(e, arrayOfNulls(lists.size), "").also { runners += it }
                 if (r.stages[i] == null) r.stages[i] = stage(e)
-                if (r.number.isEmpty()) r.number = e.bib
+                if (r.number.isEmpty()) r.number = e.bib.trim()
+                if (r.number.isNotEmpty()) byBib.putIfAbsent(r.number, r)
                 if (e.excluded) r.excluded = true
                 if (r.entry.card == null && e.card != null) r.entry = r.entry.copy(card = e.card)
                 e.card?.let { byCard.putIfAbsent(it, r) }

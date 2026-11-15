@@ -1,39 +1,44 @@
 package dk.binumre.layout
 
-import dk.binumre.model.Graphic
+import dk.binumre.model.Frame
 import kotlin.math.abs
 import kotlin.math.roundToLong
 
-/** Hvor på et stykke grafik musen (eller fingeren) har fat: hele rammen eller et hjørne. */
+/** Hvor på en ramme musen (eller fingeren) har fat: hele rammen eller et hjørne. */
 enum class Handle { MOVE, NW, NE, SW, SE }
 
-/** Flytning og størrelsesændring af grafik i editoren – i mm, uafhængigt af brugerfladen. */
+/** Flytning og størrelsesændring af elementer og grafik i editoren – i mm, uafhængigt af brugerfladen. */
 object GraphicEdit {
-    const val MIN_SIZE = 5.0
+    const val MIN_SIZE = 3.0
 
     /**
-     * Hvad der ligger under punktet: først hjørnerne på den valgte grafik (inden for [tolerance] mm),
-     * ellers den øverste grafik der dækker punktet. Null når punktet rammer ved siden af.
+     * Hvad der ligger under punktet: først hjørnerne på den valgte ramme (inden for [tolerance] mm),
+     * ellers den mindste ramme der dækker punktet (så små elementer kan gribes oven på store; ved lige store
+     * vinder den sidste). Null når punktet rammer ved siden af.
      */
-    fun hit(graphics: List<Graphic>, x: Double, y: Double, selected: Int?, tolerance: Double): Pair<Int, Handle>? {
-        graphics.getOrNull(selected ?: -1)?.let { g ->
+    fun hit(frames: List<Frame>, x: Double, y: Double, selected: Int?, tolerance: Double): Pair<Int, Handle>? {
+        frames.getOrNull(selected ?: -1)?.let { f ->
             val corners = listOf(
-                Handle.NW to (g.x to g.y), Handle.NE to (g.x + g.width to g.y),
-                Handle.SW to (g.x to g.y + g.height), Handle.SE to (g.x + g.width to g.y + g.height),
+                Handle.NW to (f.x to f.y), Handle.NE to (f.right to f.y),
+                Handle.SW to (f.x to f.bottom), Handle.SE to (f.right to f.bottom),
             )
             corners.firstOrNull { (_, p) -> abs(p.first - x) <= tolerance && abs(p.second - y) <= tolerance }
                 ?.let { return selected!! to it.first }
         }
-        val i = graphics.indexOfLast { x >= it.x && x <= it.x + it.width && y >= it.y && y <= it.y + it.height }
-        return if (i < 0) null else i to Handle.MOVE
+        var best = -1
+        for ((i, f) in frames.withIndex()) {
+            if (!f.contains(x, y)) continue
+            if (best < 0 || f.width * f.height <= frames[best].width * frames[best].height) best = i
+        }
+        return if (best < 0) null else best to Handle.MOVE
     }
 
-    /** Grafikken efter et træk på ([dx], [dy]) mm fra udgangspunktet [start]. Holdes inden for startnummeret. */
-    fun drag(start: Graphic, handle: Handle, dx: Double, dy: Double): Graphic {
+    /** Rammen efter et træk på ([dx], [dy]) mm fra udgangspunktet [start]. Holdes inden for startnummeret. */
+    fun drag(start: Frame, handle: Handle, dx: Double, dy: Double): Frame {
         var left = start.x
         var top = start.y
-        var right = start.x + start.width
-        var bottom = start.y + start.height
+        var right = start.right
+        var bottom = start.bottom
         when (handle) {
             Handle.MOVE -> {
                 left = (left + dx).coerceIn(0.0, max0(BibLayout.WIDTH - start.width))
@@ -48,15 +53,22 @@ object GraphicEdit {
                 else bottom = (bottom + dy).coerceIn(top + MIN_SIZE, maxOf(BibLayout.HEIGHT, top + MIN_SIZE))
             }
         }
-        return start.copy(x = round(left), y = round(top), width = round(right - left), height = round(bottom - top))
+        return Frame(round(left), round(top), round(right - left), round(bottom - top))
+    }
+
+    /** Ramme sat via talfelter: holdes inden for startnummeret og mindst [MIN_SIZE]. */
+    fun clamp(f: Frame): Frame {
+        val w = f.width.coerceIn(MIN_SIZE, BibLayout.WIDTH)
+        val h = f.height.coerceIn(MIN_SIZE, BibLayout.HEIGHT)
+        return Frame(round(f.x.coerceIn(0.0, BibLayout.WIDTH - w)), round(f.y.coerceIn(0.0, BibLayout.HEIGHT - h)), round(w), round(h))
     }
 
     /** Ramme til et nyt billede på [pixelWidth] × [pixelHeight]: 40 mm bredt, forskudt lidt for hvert billede der er i forvejen. */
-    fun place(file: String, pixelWidth: Int, pixelHeight: Int, existing: Int): Graphic {
+    fun place(pixelWidth: Int, pixelHeight: Int, existing: Int): Frame {
         val width = 40.0
         val height = if (pixelWidth > 0 && pixelHeight > 0) (width * pixelHeight / pixelWidth).coerceIn(MIN_SIZE, 60.0) else 20.0
-        val offset = 8.0 + 6.0 * existing
-        return Graphic(file, offset, offset, width, round(height))
+        val offset = 8.0 + 6.0 * (existing % 12)
+        return Frame(offset, offset, width, round(height))
     }
 
     private fun max0(v: Double) = maxOf(0.0, v)

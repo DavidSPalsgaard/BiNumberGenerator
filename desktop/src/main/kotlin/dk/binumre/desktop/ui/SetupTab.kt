@@ -1,5 +1,6 @@
 package dk.binumre.desktop.ui
 
+import androidx.compose.foundation.VerticalScrollbar
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -10,6 +11,7 @@ import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -17,14 +19,19 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.rememberScrollbarAdapter
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.foundation.VerticalScrollbar
-import androidx.compose.foundation.rememberScrollbarAdapter
 import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedIconButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -35,21 +42,25 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import dk.binumre.layout.BibTexts
 import dk.binumre.model.BibProject
 import dk.binumre.model.BibType
 import dk.binumre.model.Sheet
 import dk.binumre.model.SortBy
+import dk.binumre.model.Stage
 import dk.binumre.startlist.NameFormat
 import java.time.ZoneId
 
-private val palette = listOf(
-    "#FFD400", "#F97316", "#EF4444", "#EC4899", "#A855F7", "#3B82F6", "#14B8A6", "#22C55E",
-    "#FFFFFF", "#D4D4D4", "#737373", "#000000", "#92400E", "#1E3A8A", "#166534", "#FDE68A",
+val palette = listOf(
+    "#FFD400", "#EE6A1B", "#EF4444", "#EC4899", "#A855F7", "#3B82F6", "#5BA4CF", "#14B8A6",
+    "#22C55E", "#0F7A3B", "#92400E", "#FFFFFF", "#D4D4D4", "#737373", "#1E3A8A", "#000000",
 )
 private val hexColor = Regex("^#[0-9A-Fa-f]{6}$")
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SetupTab(state: AppState) {
     val s = state.strings
@@ -57,11 +68,19 @@ fun SetupTab(state: AppState) {
     val scroll = rememberScrollState()
     Box(Modifier.fillMaxSize()) {
         Column(
-            Modifier.verticalScroll(scroll).padding(24.dp).widthIn(max = 760.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp),
+            Modifier.verticalScroll(scroll).padding(24.dp).widthIn(max = 820.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             Section(s["setup.general"]) {
-                RadioRow(s["setup.template"], p.type, BibType.entries, { s["type.${it.name}"] }) { state.project = p.copy(type = it) }
+                Label(s["setup.template"])
+                SingleChoiceSegmentedButtonRow {
+                    BibType.entries.forEachIndexed { i, t ->
+                        SegmentedButton(
+                            selected = p.type == t, onClick = { state.setType(t) },
+                            shape = SegmentedButtonDefaults.itemShape(i, BibType.entries.size),
+                        ) { Text(s["type.${t.name}"]) }
+                    }
+                }
                 OutlinedTextField(
                     p.eventName, { state.project = p.copy(eventName = it) },
                     label = { Text(s["setup.eventName"]) }, singleLine = true, modifier = Modifier.fillMaxWidth(),
@@ -83,10 +102,25 @@ fun SetupTab(state: AppState) {
                 }
             }
 
-            val multiday = p.type == BibType.MULTIDAY
-            Section(s[if (multiday) "setup.stages" else "setup.distances"]) {
-                val count = if (multiday) maxOf(state.lists.size, p.stages.size, 1) else 1
-                for (i in 0 until count) StageFields(state, i, multiday)
+            if (p.type == BibType.MULTIDAY) {
+                Section(s["setup.stages"]) {
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Text(s["setup.stageCount"], Modifier.width(160.dp))
+                        OutlinedIconButton(onClick = { state.setStageCount(p.stageCount - 1) }, enabled = p.stageCount > 1) { Text("−") }
+                        Text("${p.stageCount}", Modifier.width(32.dp), textAlign = TextAlign.Center, style = MaterialTheme.typography.titleLarge)
+                        OutlinedIconButton(onClick = { state.setStageCount(p.stageCount + 1) }, enabled = p.stageCount < AppState.MAX_STAGES) { Text("+") }
+                    }
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Switch(p.sharedStartList, { state.setShared(it) })
+                        Column {
+                            Text(s["setup.shared"], fontWeight = FontWeight.SemiBold)
+                            Text(s["setup.sharedHint"], style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                    }
+                    for (i in 0 until p.stageCount) StageFields(state, i, true)
+                }
+            } else {
+                Section(s["setup.distances"]) { StageFields(state, 0, false) }
             }
 
             if (p.type == BibType.RELAY) Section(s["setup.legColors"]) { LegColors(state) }
@@ -101,12 +135,21 @@ fun SetupTab(state: AppState) {
 }
 
 @Composable
-private fun Section(title: String, content: @Composable ColumnScope.() -> Unit) {
+private fun Label(text: String) =
+    Text(text, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+
+@Composable
+fun Section(title: String, content: @Composable ColumnScope.() -> Unit) {
     Column(
-        Modifier.fillMaxWidth().border(1.dp, MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(8.dp)).padding(16.dp),
+        Modifier.fillMaxWidth().background(MaterialTheme.colorScheme.surface, RoundedCornerShape(14.dp))
+            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(14.dp)).padding(20.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp),
     ) {
-        Text(title, style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Box(Modifier.size(4.dp, 18.dp).background(MaterialTheme.colorScheme.primary, RoundedCornerShape(2.dp)))
+            Spacer(Modifier.width(10.dp))
+            Text(title, style = MaterialTheme.typography.titleMedium)
+        }
         content()
     }
 }
@@ -117,14 +160,13 @@ private fun Section(title: String, content: @Composable ColumnScope.() -> Unit) 
 private fun StageFields(state: AppState, index: Int, multiday: Boolean) {
     val s = state.strings
     val stage = state.project.stage(index)
-    val list = state.lists.getOrNull(index)
-    fun change(f: (dk.binumre.model.Stage) -> dk.binumre.model.Stage) {
+    val list = state.lists.getOrNull(if (state.project.sharedStartList) 0 else index)
+    fun change(f: (Stage) -> Stage) {
         state.project = TableLogic.withStage(state.project, index, f)
     }
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         if (multiday) {
-            val title = s.format("list.stage", index + 1)
-            Text(title + (list?.let { " – " + it.source } ?: ""), style = MaterialTheme.typography.titleSmall)
+            Text(s.format("list.stage", index + 1) + (list?.let { " – " + it.source } ?: ""), style = MaterialTheme.typography.titleSmall)
         }
         FlowRow(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
             if (multiday) {
@@ -143,8 +185,8 @@ private fun StageFields(state: AppState, index: Int, multiday: Boolean) {
             }
             OutlinedTextField(
                 stage.distances[""].orEmpty(), { v -> change { TableLogic.withDistance(it, "", v) } },
-                label = { Text(s[if (names.isEmpty()) "setup.distanceAll" else "setup.distanceOther"]) },
-                placeholder = { Text(s["setup.distanceHint"]) }, singleLine = true, modifier = Modifier.width(if (names.isEmpty()) 220.dp else 320.dp),
+                label = { Text(s[if (names.isEmpty()) "setup.distanceAll" else "setup.distanceOther"], maxLines = 1) },
+                placeholder = { Text(s["setup.distanceHint"]) }, singleLine = true, modifier = Modifier.width(260.dp),
             )
         }
     }
@@ -160,29 +202,9 @@ private fun LegColors(state: AppState) {
     }
     FlowRow(horizontalArrangement = Arrangement.spacedBy(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         colors.forEachIndexed { i, hex ->
-            var open by remember { mutableStateOf(false) }
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(s.format("setup.leg", i + 1), style = MaterialTheme.typography.labelMedium)
-                Box {
-                    Swatch(hex, 44) { open = true }
-                    DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
-                        Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                            for (row in palette.chunked(8)) Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                                for (c in row) Swatch(c, 28) { set(colors.mapIndexed { j, old -> if (j == i) c else old }); open = false }
-                            }
-                            var text by remember { mutableStateOf(hex) }
-                            OutlinedTextField(
-                                text,
-                                { t ->
-                                    text = t
-                                    if (hexColor.matches(t.trim())) set(colors.mapIndexed { j, old -> if (j == i) t.trim().uppercase() else old })
-                                },
-                                label = { Text(s["setup.color"]) }, isError = !hexColor.matches(text.trim()), singleLine = true,
-                                modifier = Modifier.width(266.dp),
-                            )
-                        }
-                    }
-                }
+                ColorPicker(hex, s["setup.color"], size = 44) { c -> if (c != null) set(colors.mapIndexed { j, old -> if (j == i) c else old }) }
             }
         }
     }
@@ -194,11 +216,49 @@ private fun LegColors(state: AppState) {
     }
 }
 
+/** Farvefelt der åbner en palet og et felt til #RRGGBB. [hex] null = ingen farve (vises ternet). */
 @Composable
-private fun Swatch(hex: String, size: Int, onClick: () -> Unit) {
+fun ColorPicker(hex: String?, label: String, size: Int = 32, allowNone: String? = null, onPick: (String?) -> Unit) {
+    var open by remember { mutableStateOf(false) }
+    Box {
+        Swatch(hex, size) { open = true }
+        DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
+            Column(Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                for (row in palette.chunked(8)) Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                    for (c in row) Swatch(c, 28) { onPick(c); open = false }
+                }
+                if (allowNone != null) {
+                    Row(Modifier.clickable { onPick(null); open = false }, verticalAlignment = Alignment.CenterVertically) {
+                        Swatch(null, 28) { onPick(null); open = false }
+                        Spacer(Modifier.width(8.dp))
+                        Text(allowNone)
+                    }
+                }
+                var text by remember { mutableStateOf(hex.orEmpty()) }
+                OutlinedTextField(
+                    text,
+                    { t ->
+                        text = t
+                        if (hexColor.matches(t.trim())) onPick(t.trim().uppercase())
+                    },
+                    label = { Text(label) }, isError = text.isNotEmpty() && !hexColor.matches(text.trim()), singleLine = true,
+                    modifier = Modifier.width(266.dp),
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun Swatch(hex: String?, size: Int, onClick: () -> Unit) {
     val shape = RoundedCornerShape(6.dp)
     Box(
-        Modifier.size(size.dp).clip(shape).background(Color(0xFF000000 or BibProject.parseColor(hex).toLong()))
+        Modifier.size(size.dp).clip(shape)
+            .background(if (hex == null) Color.White else Color(0xFF000000 or BibProject.parseColor(hex).toLong()))
             .border(1.dp, Color(0x55000000), shape).clickable(onClick = onClick),
-    )
+    ) {
+        if (hex == null) androidx.compose.foundation.Canvas(Modifier.fillMaxSize()) {
+            drawLine(Color(0xFFC62828), androidx.compose.ui.geometry.Offset(0f, this.size.height), androidx.compose.ui.geometry.Offset(this.size.width, 0f), 2f)
+        }
+    }
 }

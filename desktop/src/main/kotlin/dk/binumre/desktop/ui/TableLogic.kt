@@ -38,6 +38,25 @@ object TableLogic {
         }
     }
 
+    /**
+     * Løberens startnummer: fra linjen selv, eller – ved flerdagesløb, hvor nummeret kun står på én etape –
+     * fra den løber linjen er matchet med (samme SI-brik, ellers samme navn og klub).
+     */
+    fun resolvedNumber(e: StartEntry, bibs: List<dk.binumre.model.Bib>): String {
+        e.bib.trim().ifEmpty { null }?.let { return it }
+        fun person(given: String, family: String, name: String, club: String) = listOf(given, family, name, club).joinToString("|") { it.trim().lowercase() }
+        val me = person(e.given, e.family, e.name, e.club)
+        return (e.card?.let { c -> bibs.firstOrNull { it.card == c } } ?: bibs.firstOrNull { person(it.given, it.family, it.name, it.club) == me })
+            ?.number.orEmpty()
+    }
+
+    /** Startnummerets nøgle for en linje i startlisten (samme som [dk.binumre.model.Bib.key]). */
+    fun entryKey(e: StartEntry, type: dk.binumre.model.BibType, number: String = e.bib): String {
+        val bib = number.trim()
+        if (bib.isEmpty()) return ""
+        return if (type == dk.binumre.model.BibType.RELAY && e.leg.isNotEmpty()) dk.binumre.model.BibBuilder.teamNumber(bib, e.leg) + "/" + e.leg else bib
+    }
+
     fun time(start: Long?, zone: ZoneId): String {
         if (start == null) return ""
         val t = Instant.ofEpochMilli(start).atZone(zone)

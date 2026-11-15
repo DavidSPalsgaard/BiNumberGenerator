@@ -3,6 +3,9 @@ package dk.binumre.desktop
 import dk.binumre.desktop.ui.AppState
 import dk.binumre.desktop.ui.EntryFields
 import dk.binumre.desktop.ui.FieldException
+import dk.binumre.desktop.ui.PrintScope
+import dk.binumre.desktop.ui.Screen
+import dk.binumre.desktop.ui.Selection
 import dk.binumre.desktop.ui.Strings
 import dk.binumre.desktop.ui.TableLogic
 import dk.binumre.layout.BibFont
@@ -125,13 +128,16 @@ class GuiLogicTest {
     @Test
     fun indlæsRetOgSkrivPdf() {
         val state = AppState()
+        assertEquals(Screen.START, state.screen)
+        state.start(BibType.SINGLE)
+        assertEquals(Screen.MAIN, state.screen)
         state.loadFiles(listOf(resource("startliste_eksempel.xml")))
         assertNull(state.error)
         assertEquals(BibType.SINGLE, state.project.type)
         assertEquals("Testløbet", state.project.eventName)
         assertEquals(2, state.bibSet.bibs.size)
         assertEquals(1, state.bibSet.withoutNumber)
-        assertEquals(listOf("S1"), TableLogic.startNames(state.lists[0]))
+        assertEquals(listOf("S1"), TableLogic.startNames(state.lists[0]!!))
 
         // Giv løberen uden nummer et startnummer, og fravælg en anden
         state.updateEntries(0) { _, e -> if (e.bib.isEmpty()) e.copy(bib = "102") else e }
@@ -140,10 +146,11 @@ class GuiLogicTest {
         state.updateEntries(0) { _, e -> if (e.bib == "301") e.copy(excluded = true) else e }
         assertEquals(listOf("101", "102"), state.bibSet.bibs.map { it.number })
 
-        // En ny fil erstatter listen ved enkeltløb
-        state.loadFiles(listOf(resource("stafet_eksempel.xml")))
+        // En ny fil erstatter listen ved enkeltløb; flere filer → kun den første bruges
+        state.loadFiles(listOf(resource("stafet_eksempel.xml"), resource("etape2_eksempel.xml")))
         assertEquals(1, state.lists.size)
-        state.project = state.project.copy(type = BibType.RELAY)
+        assertEquals(BibType.SINGLE, state.project.type)
+        state.setType(BibType.RELAY)
         assertEquals(listOf("12", "12", "12"), state.bibSet.bibs.map { it.number })
 
         val dir = tempDir()
@@ -155,19 +162,104 @@ class GuiLogicTest {
     }
 
     @Test
-    fun flereFilerBliverTilEtaper() {
+    fun flerdagesløbMedÉnListePrEtapeEllerFælles() {
         val state = AppState()
+        state.start(BibType.MULTIDAY, 3)
+        assertEquals(3, state.project.stageCount)
+        assertEquals(3, state.slotCount)
+        assertEquals(3, state.previewBib.stages.size)
+
+        // To filer valgt fra etape 1 fylder etape 1 og 2; etape 3 mangler endnu
         state.loadFiles(listOf(resource("startliste_eksempel.xml"), resource("etape2_eksempel.xml")))
-        assertEquals(BibType.MULTIDAY, state.project.type)
-        assertEquals(2, state.lists.size)
-        assertEquals(2, state.previewBib.stages.size)
+        assertNull(state.error)
+        assertEquals(listOf("startliste_eksempel.xml", "etape2_eksempel.xml", null), state.usedLists.map { it?.source })
+        val anna = state.bibSet.bibs.first { it.number == "101" }
+        // Anna har intet nummer i etape 2's fil, men får sit nummer fra etape 1 (matchet på SI-brik)
+        val annaDay2 = state.lists[1]!!.entries.first { it.given == "Anna Marie" }
+        assertEquals("", annaDay2.bib)
+        assertEquals("101", TableLogic.resolvedNumber(annaDay2, state.bibSet.bibs))
+        assertEquals(3, anna.stages.size)
+        assertEquals("S2", anna.stages[1]!!.startName)
+        assertNull(anna.stages[2])
+
+        // Fil til etape 3 alene; flere filer end etaper udvider antallet
+        state.loadFiles(listOf(resource("etape2_eksempel.xml")), slot = 2)
+        assertEquals("etape2_eksempel.xml", state.usedLists[2]?.source)
+        state.loadFiles(listOf(resource("etape2_eksempel.xml"), resource("etape2_eksempel.xml")), slot = 2)
+        assertEquals(4, state.project.stageCount)
+
         state.project = TableLogic.withStage(state.project, 1) { it.copy(label = "Søndag") }
+        state.setStageCount(2)
+        assertEquals(listOf(Stage(), Stage("Søndag")), state.project.stages)
+        assertEquals(2, state.lists.size)
         state.removeList(0)
-        assertEquals(listOf(Stage("Søndag")), state.project.stages)
-        assertEquals("etape2_eksempel.xml", state.lists.single().source)
+        assertNull(state.usedLists[0])
+
+        // Fælles liste: én plads, alle etaper fra samme fil
+        state.setShared(true)
+        assertEquals(1, state.slotCount)
+        state.loadFiles(listOf(resource("startliste_eksempel.xml")))
+        assertEquals(2, state.bibSet.bibs.first().stages.count { it != null })
 
         state.loadFiles(listOf(File("findes-ikke.xml")))
         assertTrue(state.error != null)
+    }
+
+    @Test
+    fun udskriftAfAlleNyeOgÉn() {
+        val state = AppState()
+        state.start(BibType.SINGLE)
+        state.loadFiles(listOf(resource("startliste_eksempel.xml")))
+        assertEquals(listOf("101", "301"), state.bibsFor(PrintScope.All).map { it.number })
+        assertEquals(listOf("301"), state.bibsFor(PrintScope.One("301")).map { it.number })
+
+        state.markPrinted(state.bibsFor(PrintScope.All))
+        assertEquals(emptyList<String>(), state.notPrinted.map { it.number })
+        // En nytilkommen får nummer → kun den er "ikke udskrevet"
+        state.updateEntries(0) { _, e -> if (e.bib.isEmpty()) e.copy(bib = "102") else e }
+        assertEquals(listOf("102"), state.bibsFor(PrintScope.NotPrinted).map { it.number })
+        assertEquals("102", TableLogic.entryKey(state.lists[0]!!.entries.first { it.bib == "102" }, BibType.SINGLE))
+        // Huskes i projektfilen
+        assertEquals(setOf("101", "301"), BibProject.fromJson(state.project.toJson()).printed)
+        state.forgetPrinted()
+        assertEquals(3, state.notPrinted.size)
+
+        // Stafet: nøglen er nummer/tur
+        state.loadFiles(listOf(resource("stafet_eksempel.xml")))
+        state.setType(BibType.RELAY)
+        val keys = state.bibSet.bibs.map { it.key }
+        assertEquals(listOf("12/1", "12/2", "12/3"), keys)
+        assertEquals(keys.toSet(), state.lists[0]!!.entries.map { TableLogic.entryKey(it, BibType.RELAY) }.toSet())
+    }
+
+    @Test
+    fun direkteUdskriftSenderSiderneTilPrinteren() {
+        val state = AppState()
+        state.start(BibType.SINGLE)
+        state.loadFiles(listOf(resource("startliste_eksempel.xml")))
+        val out = java.io.ByteArrayOutputStream()
+        val factory = java.awt.print.PrinterJob.lookupStreamPrintServices("application/postscript").firstOrNull()
+            ?: return // Ingen PostScript-udskrift i denne Java – springes over
+        val job = Printer.prepare(state.bibSet.bibs, state.project, "Test", factory.getPrintService(out))!!
+        assertEquals(1, job.pages)
+        job.print()
+        val ps = out.toString(Charsets.ISO_8859_1)
+        assertTrue(ps.startsWith("%!PS"))
+        assertTrue(ps.length > 10_000)
+    }
+
+    @Test
+    fun elementerFlyttesOgLayoutNulstilles() {
+        val state = AppState()
+        state.start(BibType.RELAY)
+        assertFalse(state.project.customLayout)
+        val i = state.elements.indexOfFirst { it.kind == dk.binumre.model.ElementKind.NUMBER }
+        state.updateElement(i, state.elements[i].copy(x = 20.0, background = 0x5BA4CF, color = 0xFFFFFF))
+        assertTrue(state.project.customLayout)
+        assertEquals(20.0, state.elements[i].x, 0.0)
+        assertEquals(BibProject.fromJson(state.project.toJson()).elements, state.project.elements)
+        state.resetLayout()
+        assertFalse(state.project.customLayout)
     }
 
     @Test
@@ -179,7 +271,11 @@ class GuiLogicTest {
         assertFalse(state.dirty)
         state.addGraphic(logo)
         assertEquals(Graphic(logo.absolutePath, 8.0, 8.0, 40.0, 20.0), state.project.graphics.single())
-        assertEquals(0, state.selectedGraphic)
+        assertEquals(Selection(true, 0), state.selection)
+        // Vilkårligt mange billeder
+        repeat(14) { state.addGraphic(logo) }
+        assertEquals(15, state.project.graphics.size)
+        repeat(14) { state.removeGraphic(1) }
         assertTrue(state.dirty)
 
         state.addGraphic(File(dir, "mangler.png"))
@@ -207,9 +303,9 @@ class GuiLogicTest {
     @Test
     fun testpakkensFilerSvarerTilVejledningen() {
         val dir = File("../testpakke")
-        val csv = AppState().apply { loadFiles(listOf(File(dir, "startliste_eksempel.csv"))) }
+        val csv = AppState().apply { start(BibType.SINGLE); loadFiles(listOf(File(dir, "startliste_eksempel.csv"))) }
         assertNull(csv.error)
-        val entries = csv.lists.single().entries
+        val entries = csv.lists.single()!!.entries
         assertEquals(5, entries.size)
         assertEquals(4, csv.bibSet.bibs.size)
         assertEquals(1, csv.bibSet.withoutNumber)
@@ -217,13 +313,21 @@ class GuiLogicTest {
         assertNull(entries.single { it.given == "Ditte" }.start)
         assertEquals("Æse Ørsted", entries.single { it.bib == "14" }.displayName(dk.binumre.startlist.NameFormat.GIVEN_FAMILY))
 
-        val xlsx = AppState().apply { loadFiles(listOf(File(dir, "startliste_eksempel.xlsx"))) }
+        val xlsx = AppState().apply { start(BibType.SINGLE); loadFiles(listOf(File(dir, "startliste_eksempel.xlsx"))) }
         assertNull(xlsx.error)
-        assertEquals(4, xlsx.lists.single().entries.size)
-        assertEquals("Åberg", xlsx.lists.single().entries.single { it.bib.isEmpty() }.family)
+        assertEquals(4, xlsx.lists.single()!!.entries.size)
+        assertEquals("Åberg", xlsx.lists.single()!!.entries.single { it.bib.isEmpty() }.family)
+
+        // Tre etaper i én fil: én startliste til alle etaper, hver etape med sin egen starttid
+        val multi = AppState().apply { start(BibType.MULTIDAY, 3); setShared(true); loadFiles(listOf(File(dir, "flerdages_alle_etaper.xml"))) }
+        assertNull(multi.error)
+        assertEquals(listOf("12", "13", "14", "15"), multi.bibSet.bibs.map { it.number })
+        val first = multi.bibSet.bibs.first()
+        assertEquals(listOf("10:00:00", "11:00:00", "12:00:00"), first.stages.map { TableLogic.time(it!!.start, java.time.ZoneId.of("Europe/Copenhagen")) })
 
         val relay = AppState()
         relay.openProject(File(dir, "stafet_projekt.json"))
+        assertEquals(Screen.MAIN, relay.screen)
         assertNull(relay.error)
         assertEquals(BibType.RELAY, relay.project.type)
         assertTrue(relay.images.get(relay.project.graphics.single().file) != null)
@@ -247,12 +351,28 @@ class GuiLogicTest {
         for (k in en.keys) assertEquals(k, placeholder.findAll(en.getValue(k)).map { it.value }.toSet(), placeholder.findAll(da.getValue(k)).map { it.value }.toSet())
     }
 
+    /** Alle faste nøgler i koden (s["…"] og s.format("…")) findes i en.properties. */
+    @Test
+    fun alleNøglerIKodenFindes() {
+        val en = Strings.read("en")
+        val key = Regex("""\b(?:s|strings|state\.strings)(?:\.format\(|\[)"([a-zA-Z.]+)"""")
+        val used = File("src/main/kotlin").walk().filter { it.extension == "kt" }
+            .flatMap { f -> key.findAll(f.readText()).map { it.groupValues[1] } }.toSet()
+        assertTrue(used.size > 100)
+        assertEquals(emptySet<String>(), used - en.keys)
+        // Nøgler der sættes sammen af enum-navne
+        val composed = dk.binumre.model.ElementKind.entries.map { "kind.${it.name}" } + dk.binumre.model.InfoField.entries.map { "info.${it.name}" } +
+            dk.binumre.layout.Align.entries.map { "align.${it.name}" } + BibType.entries.map { "type.${it.name}" } +
+            dk.binumre.model.Sheet.entries.map { "sheet.${it.name}" } + dk.binumre.model.SortBy.entries.map { "sort.${it.name}" }
+        assertEquals(emptySet<String>(), composed.toSet() - en.keys)
+    }
+
     @Test
     fun teksterMedPladsholdereOgReserve() {
         val da = Strings.load("da")
         assertEquals("3 startnumre", da.format("status.bibs", 3))
-        assertEquals("Startliste", da["tab.startlist"])
-        assertEquals("Start list", Strings.load("en")["tab.startlist"])
+        assertEquals("Startliste", da["nav.list"])
+        assertEquals("Start list", Strings.load("en")["nav.list"])
         // Ukendt sprog giver engelsk; ukendt nøgle giver nøglen
         assertEquals("en", Strings.load("xx").language)
         assertEquals("findes.ikke", da["findes.ikke"])
@@ -291,6 +411,8 @@ class GuiLogicTest {
         val pixels = ImageIO.read(png.inputStream())
         val dark = (0 until pixels.width step 4).sumOf { x -> (0 until pixels.height step 4).count { y -> pixels.getRGB(x, y) and 0xFFFFFF == 0 } }
         assertTrue(dark > 1000)
-        assertEquals(0xFFFFFF, pixels.getRGB(2, 2) and 0xFFFFFF)
+        assertEquals(0xFFFFFF, pixels.getRGB(20, 300) and 0xFFFFFF)
+        // Foldehjørnet er gråt
+        assertEquals(0xE6E6E6, pixels.getRGB(3, 3) and 0xFFFFFF)
     }
 }
