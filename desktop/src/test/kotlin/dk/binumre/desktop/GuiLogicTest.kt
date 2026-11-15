@@ -354,7 +354,13 @@ class GuiLogicTest {
         val (event, club, sponsor) = state.project.graphics.drop(1)
         assertTrue(event.x < 30 && event.y < 5)
         assertTrue(club.x + club.width > 180 && club.y < 5)
-        assertTrue(sponsor.y > 80 && sponsor.x in 60.0..120.0)
+        assertTrue("$sponsor", sponsor.y in 70.0..85.0 && sponsor.x < 50)
+        // Næste sponsor står ved siden af – ikke oven i
+        state.addGraphic(logo, dk.binumre.model.GraphicRole.SPONSOR)
+        val sponsor2 = state.project.graphics.last()
+        assertEquals(sponsor.y, sponsor2.y, 0.0)
+        assertTrue(sponsor2.x >= sponsor.x + sponsor.width)
+        state.removeGraphic(state.project.graphics.lastIndex)
         assertEquals(2.0, event.width / event.height, 0.01)
         repeat(3) { state.removeGraphic(1) }
         // Vilkårligt mange billeder

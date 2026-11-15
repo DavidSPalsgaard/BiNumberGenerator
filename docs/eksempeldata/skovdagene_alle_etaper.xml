@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Opdigtede eksempeldata: tre etaper i én fil -->
+<StartList xmlns="http://www.orienteering.org/datastandard/3.0" iofVersion="3.0" creator="Eksempel">
+<Event><Name>Skovdagene 2026</Name><StartTime><Date>2026-07-03</Date></StartTime></Event>
+<ClassStart><Class><Name>D21</Name></Class><StartName>S1</StartName>
+<PersonStart><Person><Name><Family>Bækgaard</Family><Given>Karen</Given></Name></Person><Organisation><Name>OK Granhøj</Name></Organisation>
+<Start raceNumber="1"><BibNumber>201</BibNumber><StartTime>2026-07-03T10:00:00+02:00</StartTime><Course><Name>3</Name><Length>6200</Length></Course><ControlCard>8300201</ControlCard></Start>
+<Start raceNumber="2"><BibNumber>201</BibNumber><StartTime>2026-07-04T10:30:00+02:00</StartTime><Course><Name>3</Name><Length>6600</Length></Course><ControlCard>8300201</ControlCard></Start>
+<Start raceNumber="3"><BibNumber>201</BibNumber><StartTime>2026-07-05T11:00:00+02:00</StartTime><Course><Name>3</Name><Length>7000</Length></Course><ControlCard>8300201</ControlCard></Start>
+</PersonStart>
+<PersonStart><Person><Name><Family>Mosegaard</Family><Given>Anna</Given></Name></Person><Organisation><Name>Søbakken Orientering</Name></Organisation>
+<Start raceNumber="1"><BibNumber>202</BibNumber><StartTime>2026-07-03T10:02:00+02:00</StartTime><Course><Name>3</Name><Length>6200</Length></Course><ControlCard>8300202</ControlCard></Start>
+<Start raceNumber="2"><BibNumber>202</BibNumber><StartTime>2026-07-04T10:32:00+02:00</StartTime><Course><Name>3</Name><Length>6600</Length></Course><ControlCard>8300202</ControlCard></Start>
+<Start raceNumber="3"><BibNumber>202</BibNumber><StartTime>2026-07-05T11:02:00+02:00</StartTime><Course><Name>3</Name><Length>7000</Length></Course><ControlCard>8300202</ControlCard></Start>
+</PersonStart>
+<PersonStart><Person><Name><Family>Lund</Family><Given>Sofie</Given></Name></Person><Organisation><Name>Fjeldby OK</Name></Organisation>
+<Start raceNumber="1"><BibNumber>203</BibNumber><StartTime>2026-07-03T10:04:00+02:00</StartTime><Course><Name>3</Name><Length>6200</Length></Course><ControlCard>8300203</ControlCard></Start>
+<Start raceNumber="2"><BibNumber>203</BibNumber><StartTime>2026-07-04T10:34:00+02:00</StartTime><Course><Name>3</Name><Length>6600</Length></Course><ControlCard>8300203</ControlCard></Start>
+<Start raceNumber="3"><BibNumber>203</BibNumber><StartTime>2026-07-05T11:04:00+02:00</StartTime><Course><Name>3</Name><Length>7000</Length></Course><ControlCard>8300203</ControlCard></Start>
+</PersonStart>
+</ClassStart>
+<ClassStart><Class><Name>H21</Name></Class><StartName>S1</StartName>
+<PersonStart><Person><Name><Family>Krogh</Family><Given>Anders</Given></Name></Person><Organisation><Name>OK Granhøj</Name></Organisation>
+<Start raceNumber="1"><BibNumber>204</BibNumber><StartTime>2026-07-03T10:06:00+02:00</StartTime><Course><Name>1</Name><Length>8400</Length></Course><ControlCard>8300204</ControlCard></Start>
+<Start raceNumber="2"><BibNumber>204</BibNumber><StartTime>2026-07-04T10:36:00+02:00</StartTime><Course><Name>1</Name><Length>8800</Length></Course><ControlCard>8300204</ControlCard></Start>
+<Start raceNumber="3"><BibNumber>204</BibNumber><StartTime>2026-07-05T11:06:00+02:00</StartTime><Course><Name>1</Name><Length>9200</Length></Course><ControlCard>8300204</ControlCard></Start>
+</PersonStart>
+<PersonStart><Person><Name><Family>Lindholm</Family><Given>Mads</Given></Name></Person><Organisation><Name>OK Granhøj</Name></Organisation>
+<Start raceNumber="1"><BibNumber>205</BibNumber><StartTime>2026-07-03T10:08:00+02:00</StartTime><Course><Name>1</Name><Length>8400</Length></Course><ControlCard>8300205</ControlCard></Start>
+<Start raceNumber="2"><BibNumber>205</BibNumber><StartTime>2026-07-04T10:38:00+02:00</StartTime><Course><Name>1</Name><Length>8800</Length></Course><ControlCard>8300205</ControlCard></Start>
+<Start raceNumber="3"><BibNumber>205</BibNumber><StartTime>2026-07-05T11:08:00+02:00</StartTime><Course><Name>1</Name><Length>9200</Length></Course><ControlCard>8300205</ControlCard></Start>
+</PersonStart>
+<PersonStart><Person><Name><Family>Bjerre</Family><Given>Anders</Given></Name></Person><Organisation><Name>Søbakken Orientering</Name></Organisation>
+<Start raceNumber="1"><BibNumber>206</BibNumber><StartTime>2026-07-03T10:10:00+02:00</StartTime><Course><Name>1</Name><Length>8400</Length></Course><ControlCard>8300206</ControlCard></Start>
+<Start raceNumber="2"><BibNumber>206</BibNumber><StartTime>2026-07-04T10:40:00+02:00</StartTime><Course><Name>1</Name><Length>8800</Length></Course><ControlCard>8300206</ControlCard></Start>
+<Start raceNumber="3"><BibNumber>206</BibNumber><StartTime>2026-07-05T11:10:00+02:00</StartTime><Course><Name>1</Name><Length>9200</Length></Course><ControlCard>8300206</ControlCard></Start>
+</PersonStart>
+</ClassStart>
+<ClassStart><Class><Name>D45</Name></Class><StartName>S2</StartName>
+<PersonStart><Person><Name><Family>Storm</Family><Given>Sofie</Given></Name></Person><Organisation><Name>OK Granhøj</Name></Organisation>
+<Start raceNumber="1"><BibNumber>207</BibNumber><StartTime>2026-07-03T10:12:00+02:00</StartTime><Course><Name>4</Name><Length>4800</Length></Course><ControlCard>8300207</ControlCard></Start>
+<Start raceNumber="2"><BibNumber>207</BibNumber><StartTime>2026-07-04T10:42:00+02:00</StartTime><Course><Name>4</Name><Length>5200</Length></Course><ControlCard>8300207</ControlCard></Start>
+<Start raceNumber="3"><BibNumber>207</BibNumber><StartTime>2026-07-05T11:12:00+02:00</StartTime><Course><Name>4</Name><Length>5600</Length></Course><ControlCard>8300207</ControlCard></Start>
+</PersonStart>
+<PersonStart><Person><Name><Family>Højbjerg</Family><Given>Mette</Given></Name></Person><Organisation><Name>OK Granhøj</Name></Organisation>
+<Start raceNumber="1"><BibNumber>208</BibNumber><StartTime>2026-07-03T10:14:00+02:00</StartTime><Course><Name>4</Name><Length>4800</Length></Course><ControlCard>8300208</ControlCard></Start>
+<Start raceNumber="2"><BibNumber>208</BibNumber><StartTime>2026-07-04T10:44:00+02:00</StartTime><Course><Name>4</Name><Length>5200</Length></Course><ControlCard>8300208</ControlCard></Start>
+<Start raceNumber="3"><BibNumber>208</BibNumber><StartTime>2026-07-05T11:14:00+02:00</StartTime><Course><Name>4</Name><Length>5600</Length></Course><ControlCard>8300208</ControlCard></Start>
+</PersonStart>
+<PersonStart><Person><Name><Family>Kjær</Family><Given>Freja</Given></Name></Person><Organisation><Name>OK Granhøj</Name></Organisation>
+<Start raceNumber="1"><BibNumber>209</BibNumber><StartTime>2026-07-03T10:16:00+02:00</StartTime><Course><Name>4</Name><Length>4800</Length></Course><ControlCard>8300209</ControlCard></Start>
+<Start raceNumber="2"><BibNumber>209</BibNumber><StartTime>2026-07-04T10:46:00+02:00</StartTime><Course><Name>4</Name><Length>5200</Length></Course><ControlCard>8300209</ControlCard></Start>
+<Start raceNumber="3"><BibNumber>209</BibNumber><StartTime>2026-07-05T11:16:00+02:00</StartTime><Course><Name>4</Name><Length>5600</Length></Course><ControlCard>8300209</ControlCard></Start>
+</PersonStart>
+</ClassStart>
+<ClassStart><Class><Name>H45</Name></Class><StartName>S2</StartName>
+<PersonStart><Person><Name><Family>Lindholm</Family><Given>Jonas</Given></Name></Person><Organisation><Name>OK Skovløberne</Name></Organisation>
+<Start raceNumber="1"><BibNumber>210</BibNumber><StartTime>2026-07-03T10:18:00+02:00</StartTime><Course><Name>2</Name><Length>6900</Length></Course><ControlCard>8300210</ControlCard></Start>
+<Start raceNumber="2"><BibNumber>210</BibNumber><StartTime>2026-07-04T10:48:00+02:00</StartTime><Course><Name>2</Name><Length>7300</Length></Course><ControlCard>8300210</ControlCard></Start>
+<Start raceNumber="3"><BibNumber>210</BibNumber><StartTime>2026-07-05T11:18:00+02:00</StartTime><Course><Name>2</Name><Length>7700</Length></Course><ControlCard>8300210</ControlCard></Start>
+</PersonStart>
+<PersonStart><Person><Name><Family>Lindholm</Family><Given>Søren</Given></Name></Person><Organisation><Name>Fjeldby OK</Name></Organisation>
+<Start raceNumber="1"><BibNumber>211</BibNumber><StartTime>2026-07-03T10:20:00+02:00</StartTime><Course><Name>2</Name><Length>6900</Length></Course><ControlCard>8300211</ControlCard></Start>
+<Start raceNumber="2"><BibNumber>211</BibNumber><StartTime>2026-07-04T10:50:00+02:00</StartTime><Course><Name>2</Name><Length>7300</Length></Course><ControlCard>8300211</ControlCard></Start>
+<Start raceNumber="3"><BibNumber>211</BibNumber><StartTime>2026-07-05T11:20:00+02:00</StartTime><Course><Name>2</Name><Length>7700</Length></Course><ControlCard>8300211</ControlCard></Start>
+</PersonStart>
+<PersonStart><Person><Name><Family>Skovgaard</Family><Given>Jonas</Given></Name></Person><Organisation><Name>OK Granhøj</Name></Organisation>
+<Start raceNumber="1"><BibNumber>212</BibNumber><StartTime>2026-07-03T10:22:00+02:00</StartTime><Course><Name>2</Name><Length>6900</Length></Course><ControlCard>8300212</ControlCard></Start>
+<Start raceNumber="2"><BibNumber>212</BibNumber><StartTime>2026-07-04T10:52:00+02:00</StartTime><Course><Name>2</Name><Length>7300</Length></Course><ControlCard>8300212</ControlCard></Start>
+<Start raceNumber="3"><BibNumber>212</BibNumber><StartTime>2026-07-05T11:22:00+02:00</StartTime><Course><Name>2</Name><Length>7700</Length></Course><ControlCard>8300212</ControlCard></Start>
+</PersonStart>
+</ClassStart>
+</StartList>

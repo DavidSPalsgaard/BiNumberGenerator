@@ -92,7 +92,7 @@ object GraphicEdit {
 
     /**
      * Standardplads efter billedets rolle: løbets logo øverst til venstre, arrangørens logo øverst til højre,
-     * sponsorer i rækken mellem SI-nummer og stregkode (lidt forskudt for hver), andet midt på.
+     * sponsorer side om side over navnet, andet forskudt fra øverste venstre hjørne.
      * [stages]: antal etaper (løberens felt i bunden er højere ved flerdagesløb).
      */
     fun placeFor(role: dk.binumre.model.GraphicRole, pixelWidth: Int, pixelHeight: Int, existingOfRole: Int, stages: Int): Frame {
@@ -103,8 +103,12 @@ object GraphicEdit {
         return when (role) {
             dk.binumre.model.GraphicRole.EVENT_LOGO -> fit(34.0, 18.0).let { (w, h) -> Frame(16.0, 1.0, w, h) }
             dk.binumre.model.GraphicRole.CLUB_LOGO -> fit(34.0, 18.0).let { (w, h) -> Frame(round(BibLayout.WIDTH - 16.0 - w), 1.0, w, h) }
-            dk.binumre.model.GraphicRole.SPONSOR -> fit(42.0, 12.0).let { (w, h) ->
-                clamp(Frame(70.0 + 6.0 * (existingOfRole % 6), split - 14.5 - 4.0 * (existingOfRole % 3), w, h))
+            // Sponsorer side om side i en række lige over navnet (fire pr. række; flere rækker opad)
+            dk.binumre.model.GraphicRole.SPONSOR -> fit(44.0, 12.0).let { (w, h) ->
+                val slot = (BibLayout.WIDTH - 16.0) / 4
+                val nameTop = split - 33.9
+                val row = existingOfRole / 4
+                clamp(Frame(round(8.0 + (existingOfRole % 4) * slot + (slot - w) / 2), round(nameTop - 1.5 - h - row * (h + 2.0)), w, h))
             }
             dk.binumre.model.GraphicRole.OTHER -> place(pixelWidth, pixelHeight, existingOfRole)
         }

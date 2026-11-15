@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Opdigtede eksempeldata -->
+<StartList xmlns="http://www.orienteering.org/datastandard/3.0" iofVersion="3.0" creator="Eksempel">
+<Event><Name>Skovløbet 2026</Name><StartTime><Date>2026-05-16</Date></StartTime></Event>
+<ClassStart><Class><Name>D21</Name></Class><Course><Name>3</Name><Length>6200</Length></Course><StartName>S1</StartName>
+<PersonStart><Person><Name><Family>Lindholm</Family><Given>Freja</Given></Name></Person><Organisation><Name>OK Granhøj</Name></Organisation><Start><BibNumber>101</BibNumber><StartTime>2026-05-16T10:00:00+02:00</StartTime><ControlCard>8100101</ControlCard></Start></PersonStart>
+<PersonStart><Person><Name><Family>Bækgaard</Family><Given>Anna</Given></Name></Person><Organisation><Name>OK Skovløberne</Name></Organisation><Start><BibNumber>102</BibNumber><StartTime>2026-05-16T10:02:00+02:00</StartTime><ControlCard>8100102</ControlCard></Start></PersonStart>
+<PersonStart><Person><Name><Family>Holm</Family><Given>Freja</Given></Name></Person><Organisation><Name>OK Skovløberne</Name></Organisation><Start><BibNumber>103</BibNumber><StartTime>2026-05-16T10:04:00+02:00</StartTime><ControlCard>8100103</ControlCard></Start></PersonStart>
+<PersonStart><Person><Name><Family>Mosegaard</Family><Given>Mette</Given></Name></Person><Organisation><Name>OK Skovløberne</Name></Organisation><Start><BibNumber>104</BibNumber><StartTime>2026-05-16T10:06:00+02:00</StartTime><ControlCard>8100104</ControlCard></Start></PersonStart>
+</ClassStart>
+<ClassStart><Class><Name>H21</Name></Class><Course><Name>1</Name><Length>8400</Length></Course><StartName>S1</StartName>
+<PersonStart><Person><Name><Family>Krogh</Family><Given>Mads</Given></Name></Person><Organisation><Name>OK Granhøj</Name></Organisation><Start><BibNumber>105</BibNumber><StartTime>2026-05-16T10:08:00+02:00</StartTime><ControlCard>8100105</ControlCard></Start></PersonStart>
+<PersonStart><Person><Name><Family>Mosegaard</Family><Given>Mads</Given></Name></Person><Organisation><Name>OK Skovløberne</Name></Organisation><Start><BibNumber>106</BibNumber><StartTime>2026-05-16T10:10:00+02:00</StartTime><ControlCard>8100106</ControlCard></Start></PersonStart>
+<PersonStart><Person><Name><Family>Krogh</Family><Given>Henrik</Given></Name></Person><Organisation><Name>OK Skovløberne</Name></Organisation><Start><BibNumber>107</BibNumber><StartTime>2026-05-16T10:12:00+02:00</StartTime><ControlCard>8100107</ControlCard></Start></PersonStart>
+<PersonStart><Person><Name><Family>Bækgaard</Family><Given>Ole</Given></Name></Person><Organisation><Name>Fjeldby OK</Name></Organisation><Start><BibNumber>108</BibNumber><StartTime>2026-05-16T10:14:00+02:00</StartTime><ControlCard>8100108</ControlCard></Start></PersonStart>
+</ClassStart>
+<ClassStart><Class><Name>D45</Name></Class><Course><Name>4</Name><Length>4800</Length></Course><StartName>S2</StartName>
+<PersonStart><Person><Name><Family>Skovgaard</Family><Given>Karen</Given></Name></Person><Organisation><Name>OK Granhøj</Name></Organisation><Start><BibNumber>109</BibNumber><StartTime>2026-05-16T10:16:00+02:00</StartTime><ControlCard>8100109</ControlCard></Start></PersonStart>
+<PersonStart><Person><Name><Family>Mosegaard</Family><Given>Anna</Given></Name></Person><Organisation><Name>OK Skovløberne</Name></Organisation><Start><BibNumber>110</BibNumber><StartTime>2026-05-16T10:18:00+02:00</StartTime><ControlCard>8100110</ControlCard></Start></PersonStart>
+<PersonStart><Person><Name><Family>Storm</Family><Given>Mette</Given></Name></Person><Organisation><Name>Fjeldby OK</Name></Organisation><Start><BibNumber>111</BibNumber><StartTime>2026-05-16T10:20:00+02:00</StartTime><ControlCard>8100111</ControlCard></Start></PersonStart>
+<PersonStart><Person><Name><Family>Krogh</Family><Given>Emma</Given></Name></Person><Organisation><Name>Fjeldby OK</Name></Organisation><Start><BibNumber>112</BibNumber><StartTime>2026-05-16T10:22:00+02:00</StartTime><ControlCard>8100112</ControlCard></Start></PersonStart>
+</ClassStart>
+<ClassStart><Class><Name>H45</Name></Class><Course><Name>2</Name><Length>6900</Length></Course><StartName>S2</StartName>
+<PersonStart><Person><Name><Family>Bækgaard</Family><Given>Henrik</Given></Name></Person><Organisation><Name>Søbakken Orientering</Name></Organisation><Start><BibNumber>113</BibNumber><StartTime>2026-05-16T10:24:00+02:00</StartTime><ControlCard>8100113</ControlCard></Start></PersonStart>
+<PersonStart><Person><Name><Family>Storm</Family><Given>Henrik</Given></Name></Person><Organisation><Name>Fjeldby OK</Name></Organisation><Start><BibNumber>114</BibNumber><StartTime>2026-05-16T10:26:00+02:00</StartTime><ControlCard>8100114</ControlCard></Start></PersonStart>
+<PersonStart><Person><Name><Family>Holm</Family><Given>Mads</Given></Name></Person><Organisation><Name>Fjeldby OK</Name></Organisation><Start><BibNumber>115</BibNumber><StartTime>2026-05-16T10:28:00+02:00</StartTime><ControlCard>8100115</ControlCard></Start></PersonStart>
+<PersonStart><Person><Name><Family>Bækgaard</Family><Given>Mikkel</Given></Name></Person><Organisation><Name>OK Skovløberne</Name></Organisation><Start><BibNumber>116</BibNumber><StartTime>2026-05-16T10:30:00+02:00</StartTime><ControlCard>8100116</ControlCard></Start></PersonStart>
+</ClassStart>
+<ClassStart><Class><Name>D16</Name></Class><Course><Name>5</Name><Length>3900</Length></Course><StartName>S1</StartName>
+<PersonStart><Person><Name><Family>Skovgaard</Family><Given>Karen</Given></Name></Person><Organisation><Name>Fjeldby OK</Name></Organisation><Start><BibNumber>117</BibNumber><StartTime>2026-05-16T10:32:00+02:00</StartTime><ControlCard>8100117</ControlCard></Start></PersonStart>
+<PersonStart><Person><Name><Family>Kjær</Family><Given>Clara</Given></Name></Person><Organisation><Name>OK Granhøj</Name></Organisation><Start><BibNumber>118</BibNumber><StartTime>2026-05-16T10:34:00+02:00</StartTime><ControlCard>8100118</ControlCard></Start></PersonStart>
+<PersonStart><Person><Name><Family>Dalsgaard</Family><Given>Freja</Given></Name></Person><Organisation><Name>OK Granhøj</Name></Organisation><Start><BibNumber>119</BibNumber><StartTime>2026-05-16T10:36:00+02:00</StartTime><ControlCard>8100119</ControlCard></Start></PersonStart>
+<PersonStart><Person><Name><Family>Højbjerg</Family><Given>Freja</Given></Name></Person><Organisation><Name>Fjeldby OK</Name></Organisation><Start><BibNumber>120</BibNumber><StartTime>2026-05-16T10:38:00+02:00</StartTime><ControlCard>8100120</ControlCard></Start></PersonStart>
+</ClassStart>
+<ClassStart><Class><Name>H16</Name></Class><Course><Name>5</Name><Length>4100</Length></Course><StartName>S1</StartName>
+<PersonStart><Person><Name><Family>Lund</Family><Given>Søren</Given></Name></Person><Organisation><Name>Fjeldby OK</Name></Organisation><Start><BibNumber>121</BibNumber><StartTime>2026-05-16T10:40:00+02:00</StartTime><ControlCard>8100121</ControlCard></Start></PersonStart>
+<PersonStart><Person><Name><Family>Holm</Family><Given>Mads</Given></Name></Person><Organisation><Name>Søbakken Orientering</Name></Organisation><Start><BibNumber>122</BibNumber><StartTime>2026-05-16T10:42:00+02:00</StartTime><ControlCard>8100122</ControlCard></Start></PersonStart>
+<PersonStart><Person><Name><Family>Dalsgaard</Family><Given>Henrik</Given></Name></Person><Organisation><Name>Søbakken Orientering</Name></Organisation><Start><BibNumber>123</BibNumber><StartTime>2026-05-16T10:44:00+02:00</StartTime><ControlCard>8100123</ControlCard></Start></PersonStart>
+<PersonStart><Person><Name><Family>Højbjerg</Family><Given>Rasmus</Given></Name></Person><Organisation><Name>OK Skovløberne</Name></Organisation><Start><StartTime>2026-05-16T10:46:00+02:00</StartTime><ControlCard>8100124</ControlCard></Start></PersonStart>
+</ClassStart>
+</StartList>

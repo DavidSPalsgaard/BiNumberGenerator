@@ -7,6 +7,8 @@ A4-ark eller ét pr. side.
 Programmet er lavet til Windows og kører uden installation. Hjælp, nyheder og nye versioner findes
 på **https://orientering.palsgaard.net**.
 
+![Et færdigt startnummer til et enkeltløb med logoer, sponsorer, foldehjørner og løberens felt vendt på hovedet](billeder/20-eksempel-enkeltloeb.png)
+
 ---
 
 ## Indhold
@@ -79,6 +81,8 @@ Løbstypen og antallet af etaper kan ændres senere under **Opsætning**.
 
 Du kan også klikke **Åbn gemt projekt…** for at fortsætte med et løb, du har gemt før.
 
+![Startskærmen: vælg enkeltløb, stafet eller flerdagesløb](billeder/01-startskaerm.png)
+
 ---
 
 ## 3. Startlisten
@@ -116,6 +120,8 @@ Starttid kan skrives som `10:30`, `10:30:15`, `10.30`, en Excel-tid eller en ful
 Uden genkendelige overskrifter læses CSV i O Checklist-rækkefølgen:
 `Navn, Klub, Klasse, Startnummer, Starttid, SI-brik, Startsted`.
 
+![Startlisten før der er indlæst en fil](billeder/02-tom-startliste.png)
+
 ### OFeed
 1. Klik **OFeed** på startlisten.
 2. Indsæt **QR-linket** fra løbet på OFeed (Integrationer → O Checklist) – eller løbs-id og adgangskode.
@@ -128,6 +134,8 @@ forbliver fravalgt.
 > Linket og adgangskoden gemmes i projektfilen. Giv kun projektfilen til folk, der må se løbet på OFeed.
 
 ### Tabellen
+
+![Startlisten med løbere, søgning og filtre](billeder/03-startliste.png)
 - **Søg** i navn, klub, nummer, klasse, SI-nummer, hold, bane og start (alle ord skal passe).
 - **Alle klasser** – vis kun én klasse.
 - **Uden startnummer** – vis kun løbere, der mangler et nummer (de står med rødt).
@@ -140,6 +148,8 @@ forbliver fravalgt.
 - Mærket **Ny** står ved løbere, der ikke er udskrevet endnu.
 
 Løbere uden startnummer kommer ikke med i udskriften. Antallet står nederst i vinduet.
+
+![Ret en løber – her får en eftertilmeldt løber startnummer 125](billeder/04-ret-loeber.png)
 
 ---
 
@@ -161,6 +171,10 @@ Løbere uden startnummer kommer ikke med i udskriften. Antallet står nederst i 
 | **Arkformat** | To A5 pr. A4-ark (med stiplet skærelinje) eller ét A5 pr. side. |
 | **Sortering** | Startnummer, klub, klasse eller navn. |
 
+![Opsætning: løbstype, navn, sprog, tidszone og afstand til start](billeder/05-opsaetning.png)
+
+![Opsætning: logoer, sponsorer og udskrift](billeder/06-logoer-og-udskrift.png)
+
 ---
 
 ## 5. Design af startnummeret
@@ -168,6 +182,8 @@ Løbere uden startnummer kommer ikke med i udskriften. Antallet står nederst i 
 Under **Design** ses startnummeret (A5 liggende, 210 × 148,5 mm) præcis som det udskrives –
 forhåndsvisningen bruger samme tegning og skrifter som udskriften. Pilene under nummeret bladrer
 mellem løberne; **Udskriv denne** udskriver den viste.
+
+![Design: forhåndsvisning af startnummeret og listen over elementer](billeder/07-design.png)
 
 ### Elementerne
 Alle dele af startnummeret er elementer, der kan slås til og fra, flyttes, ændres i størrelse og
@@ -203,6 +219,8 @@ drejes:
 - **Vis rammer** viser de stiplede rammer om alle elementer.
 - **Nulstil layout** giver standardlayoutet for løbstypen tilbage.
 
+![Et valgt element: mål, drejning, justering og farver foldet ud under elementet](billeder/08-design-element.png)
+
 Så længe layoutet ikke er ændret, følger det automatisk løbstypen og antallet af etaper.
 
 ### Foldehjørnerne
@@ -221,7 +239,7 @@ Under **Opsætning → Logoer og sponsorer** og i **Design → Grafik**:
 |---|---|
 | **Løbets logo…** | Øverst til venstre |
 | **Arrangørens logo…** | Øverst til højre |
-| **Sponsor…** | Mellem SI-nummer og stregkode (flere sponsorer forskydes lidt) |
+| **Sponsor…** | I en række over navnet – side om side, fire pr. række |
 | **Andet billede…** | Øverst til venstre, forskudt |
 
 - PNG og JPG – så mange billeder, du vil.
@@ -231,6 +249,8 @@ Under **Opsætning → Logoer og sponsorer** og i **Design → Grafik**:
 - Billederne gemmes i projektfilen.
 
 Brug kun logoer, du har lov til at bruge (løbets, klubbens og sponsorernes egne).
+
+![Design → Grafik: logoer og sponsorer med mål og drejning](billeder/09-design-grafik.png)
 
 ---
 
@@ -245,9 +265,15 @@ Klik **Udskriv** (øverst til højre). Vælg:
 
 og arkformatet. **Udskriv** åbner Windows' printerdialog – vælg printer og evt. antal kopier.
 
+![Udskriv startnumre: hvilke, arkformat og "husk dem som udskrevet"](billeder/10-udskriv.png)
+
 **Husk dem som udskrevet** (sat som standard) gør, at programmet ved hvad der er udskrevet. Nye
 løbere får så mærket **Ny**, og nederst i vinduet står fx *"3 ikke udskrevet"*. **Glem hvad der er
 udskrevet** nulstiller.
+
+![En løber der ikke er udskrevet endnu er mærket "Ny", og nederst står "1 ikke udskrevet"](billeder/11-nye-loebere.png)
+
+![Udskriv kun dem der ikke er udskrevet før](billeder/12-udskriv-nye.png)
 
 ### Gem som PDF
 **Eksportér PDF** (eller *Gem som PDF…* i udskriftsdialogen) gemmer det samme som en PDF-fil.
@@ -294,6 +320,8 @@ Slå **Én startliste til alle etaper** til under Opsætning. Én fil bruges til
   starttid, bane og start.
 - Ellers bruges samme oplysninger på alle etaper.
 
+![Flerdagesløb med én startliste til alle etaper](billeder/18-flerdages-startliste.png)
+
 ### Samme løber på tværs af etaper
 Løberne matches i denne rækkefølge:
 
@@ -308,9 +336,17 @@ stadig.
 Ved flerdagesløb er løberens felt **én kasse pr. etape side om side** med etapens overskrift,
 starttid, klasse · bane og start · afstand.
 
+![Flerdagesløb: antal etaper, én startliste til alle etaper, overskrift og afstand pr. etape](billeder/17-flerdages-etaper.png)
+
+![Flerdagesløb i Design: én kasse pr. etape i bunden](billeder/19-flerdages-design.png)
+
+![Færdigt startnummer til et tredages løb](billeder/22-eksempel-flerdagesloeb.png)
+
 ---
 
 ## 10. Stafet i detaljer
+
+![Stafettens startliste med hold og ture](billeder/14-stafet-startliste.png)
 
 - Holdets ture har **samme startnummer**. Numre som `12.1`, `12-1` og `12/1` bliver til `12`, når
   tallet efter tegnet er turen.
@@ -321,6 +357,12 @@ starttid, klasse · bane og start · afstand.
 - Nummeret og andre elementer kan få **turens farve** som tekst eller baggrund.
 - **Holdnavnet** vises i stedet for klubben (kan ændres).
 - Stregkoden indeholder `nummer-tur`, fx `12-2`.
+
+![Stafet: farve pr. tur under Opsætning](billeder/16-stafet-farver.png)
+
+![Stafet i Design: nummeret med "Baggrund i turens farve" – her tur 2 i blåt](billeder/15-stafet-design.png)
+
+![Færdigt startnummer til 2. tur – uden starttid, da turen starter ved skiftet](billeder/21-eksempel-stafet.png)
 
 ---
 
@@ -408,6 +450,8 @@ PDF'en laves stadig.
 **Copyright © 2026 David S. Palsgaard. Alle rettigheder forbeholdes.**
 Se `LICENS.txt` i pakken og *Om* i programmet.
 
+![Om BiNumreGenerator: version, ophavsret, hjælp og licenser](billeder/13-om.png)
+
 Programmet bruger komponenter fra andre under frie licenser – oversigten og licensteksterne ligger
 i mappen `Licenser` og under *Om*:
 
@@ -434,6 +478,10 @@ i mappen `Licenser` og under *Om*:
 ---
 
 ## 15. For udviklere
+
+### Skærmbilleder og eksempeldata
+Skærmbillederne i denne hjælp ligger i `docs/billeder/` og er lavet med opdigtede data (løbere, klubber,
+løb og logoer) fra `docs/eksempeldata/` – de kan også bruges til at afprøve programmet.
 
 ### Kildekode og bygning
 - Kildekoden ligger på GitHub: `DavidSPalsgaard/BiNumberGenerator`.
