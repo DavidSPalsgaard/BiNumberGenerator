@@ -136,9 +136,9 @@ class SkiaBibCanvas(
         canvas.drawCircle(px(cx), px(cy), px(r), p)
     }
 
-    override fun rotated180(cx: Double, cy: Double, block: () -> Unit) {
+    override fun rotated(degrees: Double, cx: Double, cy: Double, block: () -> Unit) {
         canvas.save()
-        canvas.rotate(180f, px(cx), px(cy))
+        canvas.rotate(degrees.toFloat(), px(cx), px(cy))
         block()
         canvas.restore()
     }

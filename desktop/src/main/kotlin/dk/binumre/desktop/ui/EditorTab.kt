@@ -69,6 +69,7 @@ import dk.binumre.desktop.SkiaBibCanvas
 import dk.binumre.layout.Align
 import dk.binumre.layout.BibLayout
 import dk.binumre.layout.GraphicEdit
+import dk.binumre.layout.Handle
 import dk.binumre.model.BibElement
 import dk.binumre.model.BibProject
 import dk.binumre.model.BibType
@@ -122,11 +123,20 @@ private fun Preview(state: AppState, showFrames: Boolean, modifier: Modifier) {
                 state.selection = hit?.let { list[it.first].first }
                 if (hit != null) {
                     val (sel, start) = list[hit.first]
+                    val tolerance = 8.dp.toPx() / scale
                     drag(down.id) { change ->
-                        val moved = change.position - down.position
-                        val frame = GraphicEdit.drag(start, hit.second, moved.x / scale, moved.y / scale)
-                        if (sel.graphic) state.updateGraphic(sel.index, state.project.graphics[sel.index].moved(frame))
-                        else state.updateElement(sel.index, state.elements[sel.index].moved(frame))
+                        if (hit.second == Handle.ROTATE) {
+                            // Drej om rammens midte; håndtaget sidder under rammen, når den er helt oppe ved kanten
+                            val below = GraphicEdit.rotateHandle(start, tolerance).second > start.bottom
+                            val angle = GraphicEdit.angle(start, change.position.x / scale, change.position.y / scale, below)
+                            if (sel.graphic) state.updateGraphic(sel.index, state.project.graphics[sel.index].copy(rotation = angle))
+                            else state.updateElement(sel.index, state.elements[sel.index].copy(rotation = angle))
+                        } else {
+                            val moved = change.position - down.position
+                            val frame = GraphicEdit.drag(start, hit.second, moved.x / scale, moved.y / scale)
+                            if (sel.graphic) state.updateGraphic(sel.index, state.project.graphics[sel.index].moved(frame))
+                            else state.updateElement(sel.index, state.elements[sel.index].moved(frame))
+                        }
                         change.consume()
                     }
                 }
@@ -148,7 +158,20 @@ private fun Preview(state: AppState, showFrames: Boolean, modifier: Modifier) {
                 drawRect(Color(0xFFDC2626), o, sz, style = Stroke(1.dp.toPx()))
             }
         }
-        list.firstOrNull { it.first == state.selection }?.let { (_, f) -> selectionFrame(rect(f)) }
+        list.firstOrNull { it.first == state.selection }?.let { (sel, f) ->
+            selectionFrame(rect(f))
+            // Drejehåndtag (ikke for foldehjørnerne)
+            val fold = !sel.graphic && state.elements.getOrNull(sel.index)?.kind == ElementKind.FOLD
+            if (!fold) {
+                val (hx, hy) = GraphicEdit.rotateHandle(f, (8.dp.toPx() / scale).toDouble())
+                val handle = Offset((hx * scale).toFloat(), (hy * scale).toFloat())
+                val edge = Offset(handle.x, ((if (hy < f.y) f.y else f.bottom) * scale).toFloat())
+                drawLine(selectionColor, edge, handle, 1.5.dp.toPx())
+                drawCircle(Color.White, 6.dp.toPx(), handle)
+                drawCircle(selectionColor, 6.dp.toPx(), handle, style = Stroke(1.5.dp.toPx()))
+                drawArc(selectionColor, 200f, 250f, false, handle - Offset(3.dp.toPx(), 3.dp.toPx()), Size(6.dp.toPx(), 6.dp.toPx()), style = Stroke(1.2.dp.toPx()))
+            }
+        }
     }
 }
 
@@ -251,7 +274,10 @@ private fun ElementProperties(state: AppState, index: Int, e: BibElement) {
     Text(elementName(e, s), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
     if (e.kind == ElementKind.FOLD) {
         NumberField(s["editor.foldSize"], e.width, Modifier.fillMaxWidth()) { state.updateElement(index, e.copy(width = it, height = it)) }
-    } else FrameFields(s, e.frame) { state.updateElement(index, e.moved(it)) }
+    } else {
+        FrameFields(s, e.frame) { state.updateElement(index, e.moved(it)) }
+        RotationRow(s, e.rotation) { state.updateElement(index, e.copy(rotation = it)) }
+    }
     if (textKind(e.kind) || e.kind == ElementKind.INFO) {
         if (textKind(e.kind)) {
             SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
@@ -262,10 +288,7 @@ private fun ElementProperties(state: AppState, index: Int, e: BibElement) {
                 }
             }
         }
-        Row(Modifier.clickable { state.updateElement(index, e.copy(rotated = !e.rotated)) }, verticalAlignment = Alignment.CenterVertically) {
-            Checkbox(e.rotated, { state.updateElement(index, e.copy(rotated = it)) })
-            Text(s["editor.rotated"])
-        }
+
     }
     if (e.kind != ElementKind.FOLD) Row(horizontalArrangement = Arrangement.spacedBy(20.dp), verticalAlignment = Alignment.CenterVertically) {
         if (e.kind != ElementKind.LEG_STRIPE && e.kind != ElementKind.LEG_BAND) {
@@ -311,6 +334,20 @@ private fun ElementProperties(state: AppState, index: Int, e: BibElement) {
 private fun toggle(state: AppState, f: InfoField) {
     val p = state.project
     state.project = p.copy(infoFields = if (f in p.infoFields) p.infoFields - f else p.infoFields + f)
+}
+
+/** Drejning: 90° mod eller med uret, eller en vinkel i grader (0–359). */
+@Composable
+private fun RotationRow(s: Strings, rotation: Double, onChange: (Double) -> Unit) {
+    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+        androidx.compose.material3.OutlinedButton(onClick = { onChange(BibLayout.normalized(rotation - 90)) }, contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 10.dp)) {
+            Text("⟲ 90°")
+        }
+        androidx.compose.material3.OutlinedButton(onClick = { onChange(BibLayout.normalized(rotation + 90)) }, contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 10.dp)) {
+            Text("⟳ 90°")
+        }
+        NumberField(s["editor.rotation"], BibLayout.normalized(rotation), Modifier.weight(1f)) { onChange(BibLayout.normalized(it)) }
+    }
 }
 
 /** X, Y, bredde og højde i mm – holdes inden for startnummeret. */
@@ -374,7 +411,10 @@ fun GraphicList(state: AppState, withFields: Boolean) {
                 }
                 IconButton(onClick = { state.removeGraphic(i) }) { Icon(Icons.Default.Delete, contentDescription = s["remove"]) }
             }
-            if (withFields) FrameFields(s, g.frame) { state.updateGraphic(i, g.moved(it)) }
+            if (withFields) {
+                FrameFields(s, g.frame) { state.updateGraphic(i, g.moved(it)) }
+                RotationRow(s, g.rotation) { state.updateGraphic(i, g.copy(rotation = it)) }
+            }
         }
     }
 }

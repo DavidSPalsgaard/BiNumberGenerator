@@ -60,7 +60,8 @@ loeb.json]` åbner vinduet med startlisten og projektet indlæst.
   nummer, navn, klub, hold, tur, klasse, starttid, bane, SI-nummer, stregkode, løbets navn,
   løberens felt (vendt; ved flerdagesløb én kasse pr. etape) og foldehjørner med sikkerhedsnål (ét
   element for alle fire hjørner) – kan slås til/fra, flyttes og ændres i størrelse med musen, med
-  tekst- og baggrundsfarve pr. element; ved stafet også turens farve. Kun 1. tur har starttid.
+  tekst- og baggrundsfarve pr. element; ved stafet også turens farve. Elementer og billeder kan
+  drejes (håndtag, ±90° eller vinkel i grader); ved 90°/270° følger indholdet feltets lange side. Kun 1. tur har starttid.
   Vilkårligt mange billeder.
 - **Udskriv** sender direkte til en printer (styresystemets printerdialog); vælg alle, kun dem der
   ikke er udskrevet før (nytilkomne), eller én løber. **Eksportér PDF** gemmer det samme som PDF.
@@ -106,8 +107,8 @@ Udskrift: to A5 pr. A4-ark med skærelinje (`--sheet a4x2`, standard) eller ét 
 - `graphics`: billeder (PNG/JPG), mål i mm fra startnummerets øverste venstre hjørne
   (210 × 148,5 mm). Stien er relativ til projektfilen. Billedet skaleres ind i rammen og ligger
   under teksten (men over stafettens farvede bånd).
-- `elements`: startnummerets elementer (`kind`, `x`, `y`, `width`, `height`, `visible`, `rotated`,
-  `align`, evt. `color`/`background` som `#RRGGBB`). Udeladt = standardlayoutet for løbstypen.
+- `elements`: startnummerets elementer (`kind`, `x`, `y`, `width`, `height`, `visible`, `rotation`
+  i grader med uret, `align`, evt. `color`/`background` som `#RRGGBB` eller `leg` for turens farve). Udeladt = standardlayoutet for løbstypen.
 - `infoFields`, `sharedStartList`, `printed`, `ofeed`: felter i løberens felt, én liste til alle
   etaper, startnumre der er udskrevet, og OFeed-forbindelse pr. startliste (link og adgangskode –
   gem ikke projektfilen offentligt).

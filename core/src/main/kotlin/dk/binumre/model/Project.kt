@@ -22,6 +22,8 @@ enum class GraphicRole { EVENT_LOGO, CLUB_LOGO, SPONSOR, OTHER }
 data class Graphic(
     val file: String, val x: Double, val y: Double, val width: Double, val height: Double,
     val role: GraphicRole = GraphicRole.OTHER,
+    /** Drejning i grader med uret om rammens midte. */
+    val rotation: Double = 0.0,
 ) {
     val frame get() = Frame(x, y, width, height)
     fun moved(f: Frame) = copy(x = f.x, y = f.y, width = f.width, height = f.height)
@@ -85,12 +87,13 @@ data class BibProject(
         put("zone", zone)
         put("graphics", JSONArray(graphics.map {
             JSONObject().put("file", it.file).put("x", it.x).put("y", it.y).put("width", it.width).put("height", it.height).put("role", it.role.name)
+                .also { o -> if (it.rotation != 0.0) o.put("rotation", it.rotation) }
         }))
         put("legColors", JSONArray(legColors))
         put("stages", JSONArray(stages.map { JSONObject().put("label", it.label).put("distances", JSONObject(it.distances)) }))
         put("elements", JSONArray(elements.map {
             JSONObject().put("kind", it.kind.name).put("x", it.x).put("y", it.y).put("width", it.width).put("height", it.height)
-                .put("visible", it.visible).put("rotated", it.rotated).put("align", it.align.name)
+                .put("visible", it.visible).put("rotation", it.rotation).put("align", it.align.name)
                 .also { o -> it.color?.let { c -> o.put("color", hex(c)) }; it.background?.let { c -> o.put("background", hex(c)) } }
                 .also { o -> if (it.colorFromLeg) o.put("color", "leg"); if (it.backgroundFromLeg) o.put("background", "leg") }
         }))
@@ -118,6 +121,7 @@ data class BibProject(
                     Graphic(
                         it.getString("file"), it.optDouble("x", 0.0), it.optDouble("y", 0.0), it.optDouble("width", 30.0), it.optDouble("height", 30.0),
                         GraphicRole.entries.firstOrNull { r -> r.name == it.optString("role") } ?: GraphicRole.OTHER,
+                        it.optDouble("rotation", 0.0),
                     )
                 },
                 legColors = o.optJSONArray("legColors")?.let { a -> (0 until a.length()).map { a.getString(it) } } ?: d.legColors,
@@ -129,7 +133,9 @@ data class BibProject(
                     val kind = ElementKind.entries.firstOrNull { it.name == e.optString("kind") } ?: return@mapNotNull null
                     BibElement(
                         kind, e.optDouble("x", 0.0), e.optDouble("y", 0.0), e.optDouble("width", 20.0), e.optDouble("height", 10.0),
-                        visible = e.optBoolean("visible", true), rotated = e.optBoolean("rotated", false),
+                        visible = e.optBoolean("visible", true),
+                        // Ældre filer: "rotated": true = vendt på hovedet
+                        rotation = if (e.has("rotation")) e.optDouble("rotation", 0.0) else if (e.optBoolean("rotated", false)) 180.0 else 0.0,
                         align = Align.entries.firstOrNull { it.name == e.optString("align") } ?: Align.CENTER,
                         color = e.optString("color").takeIf { it.startsWith("#") }?.let(::parseColor),
                         background = e.optString("background").takeIf { it.startsWith("#") }?.let(::parseColor),

@@ -33,6 +33,25 @@ class GraphicEditTest {
     }
 
     @Test
+    fun drejehåndtagOgVinkel() {
+        val f = Frame(50.0, 50.0, 40.0, 20.0)
+        val (hx, hy) = GraphicEdit.rotateHandle(f, 2.0)
+        assertEquals(70.0 to 45.0, hx to hy)
+        assertEquals(0 to Handle.ROTATE, GraphicEdit.hit(listOf(f), 70.5, 45.5, 0, 2.0))
+        assertNull(GraphicEdit.hit(listOf(f), 70.5, 45.5, null, 2.0))
+        // Vinkler fra midten (70, 60): op = 0, højre = 90, ned = 180, venstre = 270; springer på plads nær kvarte omgange
+        assertEquals(0.0, GraphicEdit.angle(f, 70.0, 10.0), 0.0)
+        assertEquals(90.0, GraphicEdit.angle(f, 120.0, 63.0), 0.0)
+        assertEquals(180.0, GraphicEdit.angle(f, 70.0, 100.0), 0.0)
+        assertEquals(270.0, GraphicEdit.angle(f, 20.0, 60.0), 0.0)
+        assertEquals(45.0, GraphicEdit.angle(f, 100.0, 30.0), 0.0)
+        // Ramme helt oppe ved kanten: håndtaget sidder under den
+        val top = Frame(10.0, 1.0, 40.0, 20.0)
+        assertEquals(26.0, GraphicEdit.rotateHandle(top, 2.0).second, 0.0)
+        assertEquals(0.0, GraphicEdit.angle(top, 30.0, 40.0, handleBelow = true), 0.0)
+    }
+
+    @Test
     fun flytningHoldesIndenForStartnummeret() {
         assertEquals(a.copy(x = 15.0, y = 7.5), GraphicEdit.drag(a, Handle.MOVE, 5.0, -2.5))
         assertEquals(a.copy(x = 0.0, y = 0.0), GraphicEdit.drag(a, Handle.MOVE, -500.0, -500.0))

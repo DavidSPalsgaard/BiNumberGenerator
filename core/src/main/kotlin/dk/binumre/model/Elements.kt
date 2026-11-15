@@ -20,6 +20,8 @@ enum class InfoField { START_TIME, CLASS, COURSE, START_NAME, DISTANCE }
 
 /** En ramme i mm fra startnummerets øverste venstre hjørne. */
 data class Frame(val x: Double, val y: Double, val width: Double, val height: Double) {
+    val centerX get() = x + width / 2
+    val centerY get() = y + height / 2
     val right get() = x + width
     val bottom get() = y + height
     fun contains(px: Double, py: Double) = px >= x && px <= right && py >= y && py <= bottom
@@ -32,8 +34,8 @@ data class BibElement(
     val width: Double,
     val height: Double,
     val visible: Boolean = true,
-    /** Tegnes vendt på hovedet (så løberen selv kan læse det). */
-    val rotated: Boolean = false,
+    /** Drejning i grader med uret om rammens midte; 180 = vendt på hovedet (så løberen selv kan læse det). */
+    val rotation: Double = 0.0,
     val align: Align = Align.CENTER,
     /** Tekstens farve (0xRRGGBB); null = elementets standard. */
     val color: Int? = null,

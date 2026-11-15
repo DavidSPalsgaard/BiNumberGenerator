@@ -1,4 +1,4 @@
-BiNumreGenerator – testpakke (runde 4)
+BiNumreGenerator – testpakke (runde 5)
 ======================================
 
 Indhold
@@ -13,6 +13,18 @@ Indhold
 Pak hele zip-filen ud først (højreklik → "Udpak alle"). Programmet kan ikke køre inde fra zip-filen.
 Hvis Windows siger "Windows beskyttede din pc": klik "Flere oplysninger" → "Kør alligevel".
 
+
+Nyt i runde 5
+-------------
+ - Alle elementer og billeder kan drejes: træk i den runde knap over det valgte element (den
+   springer på plads ved 0°, 90°, 180° og 270°), brug knapperne "⟲ 90°" / "⟳ 90°", eller skriv
+   vinklen i grader. Ved 90° og 270° følger teksten feltets lange side – fx et smalt, højt felt
+   med løbets navn lodret langs kanten (som på 10MILA 2026).
+ - Målfelterne (X, Y, bredde, højde, vinkel) retter ikke længere tallet, mens man skriver.
+
+ Test: Design → klik på løbets navn → skriv X 2, Y 20, Bredde 9, Højde 100 → "⟳ 90°" → giv det
+ en grøn baggrund. Klik på nummeret og træk i den runde knap for at dreje det. Eksportér PDF og
+ sammenlign med forhåndsvisningen.
 
 Nyt i runde 4
 -------------

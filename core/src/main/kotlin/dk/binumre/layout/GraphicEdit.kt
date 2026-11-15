@@ -5,7 +5,7 @@ import kotlin.math.abs
 import kotlin.math.roundToLong
 
 /** Hvor på en ramme musen (eller fingeren) har fat: hele rammen eller et hjørne. */
-enum class Handle { MOVE, NW, NE, SW, SE }
+enum class Handle { MOVE, NW, NE, SW, SE, ROTATE }
 
 /** Flytning og størrelsesændring af elementer og grafik i editoren – i mm, uafhængigt af brugerfladen. */
 object GraphicEdit {
@@ -18,6 +18,8 @@ object GraphicEdit {
      */
     fun hit(frames: List<Frame>, x: Double, y: Double, selected: Int?, tolerance: Double): Pair<Int, Handle>? {
         frames.getOrNull(selected ?: -1)?.let { f ->
+            val (hx, hy) = rotateHandle(f, tolerance)
+            if (abs(hx - x) <= tolerance && abs(hy - y) <= tolerance) return selected!! to Handle.ROTATE
             val corners = listOf(
                 Handle.NW to (f.x to f.y), Handle.NE to (f.right to f.y),
                 Handle.SW to (f.x to f.bottom), Handle.SE to (f.right to f.bottom),
@@ -31,6 +33,23 @@ object GraphicEdit {
             if (best < 0 || f.width * f.height <= frames[best].width * frames[best].height) best = i
         }
         return if (best < 0) null else best to Handle.MOVE
+    }
+
+    /** Drejehåndtaget: over rammens midte (under, hvis rammen sidder helt oppe ved kanten). */
+    fun rotateHandle(f: Frame, tolerance: Double): Pair<Double, Double> {
+        val gap = tolerance * 2.5
+        return f.centerX to if (f.y - gap >= 0) f.y - gap else f.bottom + gap
+    }
+
+    /**
+     * Vinklen (grader med uret, 0 = op) fra rammens midte til punktet. Springer på plads ved hele kvarte
+     * omgange (inden for 6°), ellers hele grader.
+     */
+    fun angle(f: Frame, x: Double, y: Double, handleBelow: Boolean = false): Double {
+        val raw = Math.toDegrees(kotlin.math.atan2(x - f.centerX, f.centerY - y)) + if (handleBelow) 180.0 else 0.0
+        val d = BibLayout.normalized(raw)
+        val snap = Math.round(d / 90.0) * 90.0
+        return BibLayout.normalized(if (abs(d - snap) <= 6.0) snap else Math.round(d).toDouble())
     }
 
     /** Rammen efter et træk på ([dx], [dy]) mm fra udgangspunktet [start]. Holdes inden for startnummeret. */

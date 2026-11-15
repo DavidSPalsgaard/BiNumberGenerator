@@ -49,7 +49,11 @@ class BibTest {
         val polygons = mutableListOf<Pair<Double, Double>>()
         override fun polygon(xs: DoubleArray, ys: DoubleArray, color: Int) { polygons += xs[0] to ys[0] }
         override fun circle(cx: Double, cy: Double, r: Double, width: Double, color: Int, fill: Boolean) {}
-        override fun rotated180(cx: Double, cy: Double, block: () -> Unit) { inRotation = true; block(); inRotation = false }
+        val angles = mutableListOf<Double>()
+        override fun rotated(degrees: Double, cx: Double, cy: Double, block: () -> Unit) {
+            angles += degrees
+            if (degrees == 180.0) { inRotation = true; block(); inRotation = false } else block()
+        }
     }
 
     @Test
@@ -211,6 +215,31 @@ class BibTest {
         val leg2 = Colors().also { BibLayout.draw(it, bibs[1], project, zone) }
         assertEquals(0xFFD400, leg2.text["12"])
         assertEquals(0x000000, leg2.text["Bo Prøve"])
+    }
+
+    @Test
+    fun elementerOgGrafikKanDrejes() {
+        val base = BibProject(eventName = "Testløbet")
+        val bib = BibBuilder.build(base, listOf(load("startliste_eksempel.xml"))).bibs[0]
+        // Løbets navn i et smalt, højt felt drejet 90°: teksten følger den lange side
+        val layout = base.layout().map {
+            if (it.kind == ElementKind.EVENT_NAME) it.copy(x = 2.0, y = 20.0, width = 8.0, height = 100.0, rotation = 90.0) else it
+        }
+        val project = base.copy(elements = layout, graphics = listOf(Graphic("logo.png", 10.0, 10.0, 30.0, 15.0, rotation = 33.0)))
+        assertEquals(project, BibProject.fromJson(project.toJson()))
+        class Sizes : BibCanvas by Recorder() {
+            val sizes = mutableMapOf<String, Double>()
+            val angles = mutableListOf<Double>()
+            override fun text(text: String, x: Double, baseline: Double, font: BibFont, size: Double, align: Align, color: Int) { sizes[text] = size }
+            override fun rotated(degrees: Double, cx: Double, cy: Double, block: () -> Unit) { angles += degrees; block() }
+        }
+        val r = Sizes().also { BibLayout.draw(it, bib, project, zone) }
+        assertEquals(listOf(33.0, 90.0, 180.0), r.angles.sorted())
+        // Skriften er bestemt af feltets bredde (8 mm) – ikke af højden på 100 mm
+        assertEquals(8.0 / 1.17, r.sizes.getValue("Testløbet"), 0.01)
+        // Ældre projektfil: "rotated": true = 180°
+        val old = BibProject.fromJson("""{"elements":[{"kind":"INFO","x":0,"y":120,"width":210,"height":26,"rotated":true}]}""")
+        assertEquals(180.0, old.elements.single().rotation, 0.0)
     }
 
     @Test

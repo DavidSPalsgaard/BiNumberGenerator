@@ -23,6 +23,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.unit.dp
 import java.util.Locale
 
@@ -61,16 +62,17 @@ fun <T> RadioRow(label: String, value: T, options: List<T>, text: (T) -> String,
     }
 }
 
-/** Talfelt (mm med én decimal; komma eller punktum). Følger [value] når den ændres udefra, fx ved træk med musen. */
+/**
+ * Talfelt (mm eller grader med én decimal; komma eller punktum). Mens man skriver, rører feltet ikke teksten –
+ * først når man forlader feltet, vises den værdi der faktisk blev brugt (fx efter at den er holdt inden for
+ * startnummeret). Følger [value], når den ændres udefra, fx ved træk med musen.
+ */
 @Composable
 fun NumberField(label: String, value: Double, modifier: Modifier = Modifier, onChange: (Double) -> Unit) {
     fun parse(t: String) = t.trim().replace(',', '.').toDoubleOrNull()
     var text by remember { mutableStateOf(formatMm(value)) }
-    var last by remember { mutableStateOf(value) }
-    if (value != last) {
-        last = value
-        if (parse(text) != value) text = formatMm(value)
-    }
+    var focused by remember { mutableStateOf(false) }
+    if (!focused && parse(text) != value) text = formatMm(value)
     OutlinedTextField(
         value = text,
         onValueChange = { t ->
@@ -80,7 +82,10 @@ fun NumberField(label: String, value: Double, modifier: Modifier = Modifier, onC
         label = { Text(label) },
         isError = parse(text) == null,
         singleLine = true,
-        modifier = modifier,
+        modifier = modifier.onFocusChanged { f ->
+            if (focused && !f.isFocused) text = formatMm(value)
+            focused = f.isFocused
+        },
     )
 }
 

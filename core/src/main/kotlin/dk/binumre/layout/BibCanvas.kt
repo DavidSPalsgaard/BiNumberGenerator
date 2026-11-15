@@ -24,6 +24,9 @@ interface BibCanvas {
     /** Tegner billedet så stort som muligt inden for rammen uden at ændre forholdet. */
     fun image(file: String, x: Double, y: Double, width: Double, height: Double)
 
-    /** Alt tegnet i [block] drejes 180° om punktet – bruges til teksten løberen selv læser. */
-    fun rotated180(cx: Double, cy: Double, block: () -> Unit)
+    /** Alt tegnet i [block] drejes [degrees] grader med uret om punktet ([cx], [cy]). */
+    fun rotated(degrees: Double, cx: Double, cy: Double, block: () -> Unit)
+
+    /** Drejet 180° – teksten løberen selv læser. */
+    fun rotated180(cx: Double, cy: Double, block: () -> Unit) = rotated(180.0, cx, cy, block)
 }

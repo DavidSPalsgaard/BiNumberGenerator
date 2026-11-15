@@ -179,9 +179,14 @@ private class PdfCanvas(
         }
     }
 
-    override fun rotated180(cx: Double, cy: Double, block: () -> Unit) {
+    override fun rotated(degrees: Double, cx: Double, cy: Double, block: () -> Unit) {
         cs.saveGraphicsState()
-        cs.transform(Matrix(-1f, 0f, 0f, -1f, 2 * px(cx), 2 * py(cy)))
+        // PDF'ens y-akse går opad: med uret på siden er en negativ vinkel
+        val x = px(cx)
+        val y = py(cy)
+        cs.transform(Matrix.getTranslateInstance(x, y))
+        cs.transform(Matrix.getRotateInstance(Math.toRadians(-degrees), 0f, 0f))
+        cs.transform(Matrix.getTranslateInstance(-x, -y))
         block()
         cs.restoreGraphicsState()
     }

@@ -56,8 +56,8 @@ object BibLayout {
         val clubBase = barcodeTop - 4.0
         val nameBase = clubBase - 8.0
         val numberBottom = nameBase - 9.0
-        fun e(kind: ElementKind, x: Double, y: Double, w: Double, h: Double, visible: Boolean = true, rotated: Boolean = false, align: Align = Align.CENTER) =
-            BibElement(kind, x, y, w, h, visible, rotated, align)
+        fun e(kind: ElementKind, x: Double, y: Double, w: Double, h: Double, visible: Boolean = true, rotation: Double = 0.0, align: Align = Align.CENTER) =
+            BibElement(kind, x, y, w, h, visible, rotation, align)
         val inner = WIDTH - 2 * MARGIN
         return listOfNotNull(
             if (relay) e(ElementKind.LEG_BAND, 0.0, 0.0, WIDTH, LEG_BAND) else null,
@@ -74,7 +74,7 @@ object BibLayout {
             e(ElementKind.COURSE, 72.0, split - 10.5, 46.0, 6.6, visible = false, align = Align.LEFT),
             e(ElementKind.LEG, WIDTH - MARGIN - 24.0, top0 + 1.0, 24.0, 22.0, visible = false, align = Align.RIGHT),
             e(ElementKind.BARCODE, WIDTH - MARGIN - 80.0, barcodeTop, 80.0, 11.0),
-            e(ElementKind.INFO, 0.0, split, WIDTH, infoH, rotated = true),
+            e(ElementKind.INFO, 0.0, split, WIDTH, infoH, rotation = 180.0),
             e(ElementKind.FOLD, 0.0, 0.0, FOLD_SIZE, FOLD_SIZE),
         )
     }
@@ -89,11 +89,11 @@ object BibLayout {
 
         // Rækkefølge: farvede flader, grafik, foldehjørner og til sidst tekst – grafik må ligge i turens bånd
         for (e in elements) {
-            if (relay && (e.kind == ElementKind.LEG_BAND || e.kind == ElementKind.LEG_STRIPE)) c.rect(e.x, e.y, e.width, e.height, legColor)
+            if (relay && (e.kind == ElementKind.LEG_BAND || e.kind == ElementKind.LEG_STRIPE)) turned(c, e.rotation, e.frame) { f -> c.rect(f.x, f.y, f.width, f.height, legColor) }
         }
         fun background(e: BibElement) = if (e.backgroundFromLeg && relay) legColor else e.background
-        for (e in elements) background(e)?.let { c.rect(e.x, e.y, e.width, e.height, it) }
-        for (g in project.graphics) c.image(g.file, g.x, g.y, g.width, g.height)
+        for (e in elements) background(e)?.let { bg -> turned(c, e.rotation, e.frame) { f -> c.rect(f.x, f.y, f.width, f.height, bg) } }
+        for (g in project.graphics) turned(c, g.rotation, g.frame) { f -> c.image(g.file, f.x, f.y, f.width, f.height) }
         for (e in elements) if (e.kind == ElementKind.FOLD) {
             val s = min(e.width, e.height)
             for ((x, y) in listOf(0.0 to 0.0, WIDTH - s to 0.0, 0.0 to HEIGHT - s, WIDTH - s to HEIGHT - s)) fold(c, Frame(x, y, s, s))
@@ -102,9 +102,9 @@ object BibLayout {
         for (e in elements) {
             // Med farvet baggrund får teksten lidt luft til kanten
             val bg = background(e)
-            val f = if (bg != null && e.kind != ElementKind.INFO) e.frame.inset(e.width * 0.03, e.height * 0.1) else e.frame
-            if (e.kind == ElementKind.INFO) {
-                c.line(f.x, f.y, f.right, f.y, 0.3)
+            // Løberens felt: skillelinje i den kant der vender mod nummeret (op ved 0° og 180°)
+            if (e.kind == ElementKind.INFO && quarter(e.rotation) % 2 == 0) {
+                c.line(e.x, e.y, e.x + e.width, e.y, 0.3)
             }
             val ink = when {
                 e.colorFromLeg && relay -> legColor
@@ -112,7 +112,8 @@ object BibLayout {
                 bg != null -> contrast(bg)
                 else -> 0x000000
             }
-            val block: () -> Unit = {
+            turned(c, e.rotation, e.frame) { local ->
+                val f = if (bg != null && e.kind != ElementKind.INFO) local.inset(local.width * 0.03, local.height * 0.1) else local
                 when (e.kind) {
                     ElementKind.LEG_BAND -> if (!relay) Unit else textIn(c, "${texts.leg} ${bib.leg}", f.inset(0.0, f.height * 0.18), BibFont.BOLD, e.align, e.color ?: contrast(legColor), caps = true)
                     ElementKind.LEG_STRIPE, ElementKind.FOLD -> Unit
@@ -129,10 +130,30 @@ object BibLayout {
                     ElementKind.BARCODE -> barcode(c, barcodeText(bib), f, e.align, ink)
                     ElementKind.INFO -> info(c, bib, project, texts, zone, f, showStart)
                 }
-                Unit
             }
-            if (e.rotated) c.rotated180(f.x + f.width / 2, f.y + f.height / 2, block) else block()
         }
+    }
+
+    /** Vinklen som 0–360. */
+    fun normalized(degrees: Double): Double = ((degrees % 360.0) + 360.0) % 360.0
+
+    /** Nærmeste kvarte omgang (0, 1, 2, 3) – eller -1 for en skæv vinkel. */
+    private fun quarter(degrees: Double): Int {
+        val d = normalized(degrees)
+        val q = Math.round(d / 90.0).toInt() % 4
+        return if (kotlin.math.abs(d - Math.round(d / 90.0) * 90.0) < 0.01) q else -1
+    }
+
+    /**
+     * Tegner [draw] i rammen drejet [degrees] om rammens midte. Ved 90° og 270° bytter bredde og højde,
+     * så indholdet følger rammens lange side (fx lodret tekst i et smalt, højt felt).
+     */
+    private fun turned(c: BibCanvas, degrees: Double, f: Frame, draw: (Frame) -> Unit) {
+        val d = normalized(degrees)
+        if (d == 0.0) return draw(f)
+        val q = quarter(d)
+        val local = if (q == 1 || q == 3) Frame(f.centerX - f.height / 2, f.centerY - f.width / 2, f.height, f.width) else f
+        c.rotated(d, f.centerX, f.centerY) { draw(local) }
     }
 
     private fun Frame.inset(dx: Double, dy: Double) = Frame(x + dx, y + dy, max(0.1, width - 2 * dx), max(0.1, height - 2 * dy))
@@ -158,7 +179,7 @@ object BibLayout {
         s.courseLength?.let { String.format(Locale.forLanguageTag(language), "%.1f km", it / 1000.0) },
     ).joinToString(" · ")
 
-    /** Løberens felt – tegnes retvendt her; [BibElement.rotated] vender det. Mål skaleres med rammen. */
+    /** Løberens felt – tegnes retvendt her; [BibElement.rotation] (som standard 180°) vender det. Mål skaleres med rammen. */
     private fun info(c: BibCanvas, bib: Bib, project: BibProject, t: BibTexts, zone: ZoneId, f: Frame, showStart: Boolean = true) {
         val fields = InfoField.entries.filter { it in project.infoFields && (showStart || it != InfoField.START_TIME) }
         val sx = f.width / WIDTH
