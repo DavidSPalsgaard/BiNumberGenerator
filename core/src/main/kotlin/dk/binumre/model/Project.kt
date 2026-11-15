@@ -16,7 +16,13 @@ enum class SortBy { BIB, CLUB, CLASS, NAME }
 data class OFeedSource(val link: String, val password: String = "")
 
 /** Et stykke grafik (logo, sponsor …) på startnummeret. Mål i mm fra øverste venstre hjørne. */
-data class Graphic(val file: String, val x: Double, val y: Double, val width: Double, val height: Double) {
+/** Hvad et billede er – bestemmer standardplaceringen og hvordan det vises i listen. */
+enum class GraphicRole { EVENT_LOGO, CLUB_LOGO, SPONSOR, OTHER }
+
+data class Graphic(
+    val file: String, val x: Double, val y: Double, val width: Double, val height: Double,
+    val role: GraphicRole = GraphicRole.OTHER,
+) {
     val frame get() = Frame(x, y, width, height)
     fun moved(f: Frame) = copy(x = f.x, y = f.y, width = f.width, height = f.height)
 }
@@ -78,7 +84,7 @@ data class BibProject(
         put("sortBy", sortBy.name)
         put("zone", zone)
         put("graphics", JSONArray(graphics.map {
-            JSONObject().put("file", it.file).put("x", it.x).put("y", it.y).put("width", it.width).put("height", it.height)
+            JSONObject().put("file", it.file).put("x", it.x).put("y", it.y).put("width", it.width).put("height", it.height).put("role", it.role.name)
         }))
         put("legColors", JSONArray(legColors))
         put("stages", JSONArray(stages.map { JSONObject().put("label", it.label).put("distances", JSONObject(it.distances)) }))
@@ -109,7 +115,10 @@ data class BibProject(
                 sortBy = SortBy.entries.firstOrNull { it.name == o.optString("sortBy") } ?: d.sortBy,
                 zone = o.optString("zone"),
                 graphics = o.optJSONArray("graphics").objects().map {
-                    Graphic(it.getString("file"), it.optDouble("x", 0.0), it.optDouble("y", 0.0), it.optDouble("width", 30.0), it.optDouble("height", 30.0))
+                    Graphic(
+                        it.getString("file"), it.optDouble("x", 0.0), it.optDouble("y", 0.0), it.optDouble("width", 30.0), it.optDouble("height", 30.0),
+                        GraphicRole.entries.firstOrNull { r -> r.name == it.optString("role") } ?: GraphicRole.OTHER,
+                    )
                 },
                 legColors = o.optJSONArray("legColors")?.let { a -> (0 until a.length()).map { a.getString(it) } } ?: d.legColors,
                 stages = o.optJSONArray("stages").objects().map { s ->

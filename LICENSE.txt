@@ -1,0 +1,10 @@
+BiNumreGenerator
+Copyright © 2026 David S. Palsgaard. Alle rettigheder forbeholdes.
+
+Programmet og dets kildekode tilhører David S. Palsgaard. Brug, kopiering, ændring og videregivelse
+kræver tilladelse fra ophavsmanden, medmindre andet er aftalt skriftligt.
+
+Information, hjælp og nye versioner: https://orientering.palsgaard.net
+
+Programmet indeholder komponenter fra andre under frie licenser – se
+desktop/src/main/resources/licenses/THIRD-PARTY-NOTICES.txt.

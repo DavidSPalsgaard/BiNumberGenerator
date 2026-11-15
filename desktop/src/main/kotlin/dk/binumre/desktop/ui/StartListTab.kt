@@ -391,6 +391,7 @@ private fun OFeedDialog(state: AppState, slot: Int, onClose: () -> Unit) {
             Column(Modifier.width(520.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 OutlinedTextField(link, { link = it }, label = { Text(s["ofeed.link"]) }, singleLine = true, modifier = Modifier.fillMaxWidth())
                 OutlinedTextField(password, { password = it }, label = { Text(s["ofeed.password"]) }, singleLine = true, modifier = Modifier.fillMaxWidth())
+                Text(s["ofeed.saved"], style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         },
         confirmButton = {

@@ -73,6 +73,7 @@ import dk.binumre.model.BibElement
 import dk.binumre.model.BibProject
 import dk.binumre.model.BibType
 import dk.binumre.model.ElementKind
+import dk.binumre.model.GraphicRole
 import dk.binumre.model.Frame
 import dk.binumre.model.InfoField
 import java.io.File
@@ -329,10 +330,31 @@ private fun FrameFields(s: Strings, f: Frame, onChange: (Frame) -> Unit) {
 @Composable
 private fun GraphicsPanel(state: AppState, dialogs: FileDialogs) {
     val s = state.strings
-    FilledTonalButton(onClick = {
-        dialogs.open(s["dialog.image"], listOf("png", "jpg", "jpeg"), multiple = true).forEach(state::addGraphic)
-    }) { Icon(AppIcons.Image, null, Modifier.size(18.dp)); Spacer(Modifier.width(8.dp)); Text(s["editor.add"]) }
-    Text(s["editor.graphicsHint"], style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    Text(s["graphics.hint"], style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    GraphicButtons(state, dialogs)
+    GraphicList(state, withFields = true)
+    Spacer(Modifier.height(8.dp))
+}
+
+/** Knapper til at indsætte løbets logo, arrangørens logo, sponsorer og andet – hver på sin standardplads. */
+@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
+@Composable
+fun GraphicButtons(state: AppState, dialogs: FileDialogs) {
+    val s = state.strings
+    androidx.compose.foundation.layout.FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        for (role in GraphicRole.entries) {
+            FilledTonalButton(onClick = {
+                dialogs.open(s["dialog.image"], listOf("png", "jpg", "jpeg"), multiple = role == GraphicRole.SPONSOR || role == GraphicRole.OTHER)
+                    .forEach { state.addGraphic(it, role) }
+            }) { Icon(AppIcons.Image, null, Modifier.size(16.dp)); Spacer(Modifier.width(6.dp)); Text(s["graphics.add.${role.name}"]) }
+        }
+    }
+}
+
+/** Billederne på startnummeret; [withFields]: med mål i mm (Design). */
+@Composable
+fun GraphicList(state: AppState, withFields: Boolean) {
+    val s = state.strings
     state.project.graphics.forEachIndexed { i, g ->
         val selected = state.selection == Selection(true, i)
         val shape = RoundedCornerShape(10.dp)
@@ -344,6 +366,7 @@ private fun GraphicsPanel(state: AppState, dialogs: FileDialogs) {
         ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) {
+                    Text(s["graphics.role.${g.role.name}"], style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.secondary)
                     Text(File(g.file).name, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis)
                     if (state.images.get(g.file) == null) {
                         Text(s["editor.missing"], color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
@@ -351,8 +374,7 @@ private fun GraphicsPanel(state: AppState, dialogs: FileDialogs) {
                 }
                 IconButton(onClick = { state.removeGraphic(i) }) { Icon(Icons.Default.Delete, contentDescription = s["remove"]) }
             }
-            FrameFields(s, g.frame) { state.updateGraphic(i, g.moved(it)) }
+            if (withFields) FrameFields(s, g.frame) { state.updateGraphic(i, g.moved(it)) }
         }
     }
-    Spacer(Modifier.height(8.dp))
 }

@@ -37,6 +37,12 @@ class Strings(val language: String, private val texts: Map<String, String>, priv
             }
         }
 
+        /** Startnummerets sprog for et nyt løb: computerens, hvis startnummeret findes på det, ellers engelsk. */
+        fun bibLanguage(): String = Locale.getDefault().language.let { l ->
+            val code = if (l == "no" || l == "nn") "nb" else l
+            if (code in BibTexts.languages) code else FALLBACK
+        }
+
         /** Sprogets eget navn, fx "dansk" og "English". */
         fun languageName(code: String): String = Locale.forLanguageTag(code).let { it.getDisplayLanguage(it) }
             .replaceFirstChar { it.uppercase() }.ifEmpty { code }

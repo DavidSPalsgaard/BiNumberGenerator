@@ -71,6 +71,26 @@ object GraphicEdit {
         return Frame(offset, offset, width, round(height))
     }
 
+    /**
+     * Standardplads efter billedets rolle: løbets logo øverst til venstre, arrangørens logo øverst til højre,
+     * sponsorer i rækken mellem SI-nummer og stregkode (lidt forskudt for hver), andet midt på.
+     * [stages]: antal etaper (løberens felt i bunden er højere ved flerdagesløb).
+     */
+    fun placeFor(role: dk.binumre.model.GraphicRole, pixelWidth: Int, pixelHeight: Int, existingOfRole: Int, stages: Int): Frame {
+        val ratio = if (pixelWidth > 0 && pixelHeight > 0) pixelWidth.toDouble() / pixelHeight else 2.0
+        fun fit(maxW: Double, maxH: Double): Pair<Double, Double> =
+            if (maxW / maxH > ratio) round(maxH * ratio) to maxH else maxW to round(maxW / ratio)
+        val split = BibLayout.HEIGHT - BibLayout.infoHeight(stages)
+        return when (role) {
+            dk.binumre.model.GraphicRole.EVENT_LOGO -> fit(34.0, 18.0).let { (w, h) -> Frame(16.0, 1.0, w, h) }
+            dk.binumre.model.GraphicRole.CLUB_LOGO -> fit(34.0, 18.0).let { (w, h) -> Frame(round(BibLayout.WIDTH - 16.0 - w), 1.0, w, h) }
+            dk.binumre.model.GraphicRole.SPONSOR -> fit(42.0, 12.0).let { (w, h) ->
+                clamp(Frame(70.0 + 6.0 * (existingOfRole % 6), split - 14.5 - 4.0 * (existingOfRole % 3), w, h))
+            }
+            dk.binumre.model.GraphicRole.OTHER -> place(pixelWidth, pixelHeight, existingOfRole)
+        }
+    }
+
     private fun max0(v: Double) = maxOf(0.0, v)
 
     /** Afrunder til 0,1 mm. */

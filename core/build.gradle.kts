@@ -14,6 +14,6 @@ kotlin {
 
 dependencies {
     // Findes i forvejen på Android; på PC kommer den herfra
-    api("org.json:json:20240303")
+    api("org.json:json:20260814")
     testImplementation("junit:junit:4.13.2")
 }

@@ -62,7 +62,7 @@ private val hexColor = Regex("^#[0-9A-Fa-f]{6}$")
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SetupTab(state: AppState) {
+fun SetupTab(state: AppState, dialogs: FileDialogs) {
     val s = state.strings
     val p = state.project
     val scroll = rememberScrollState()
@@ -124,6 +124,12 @@ fun SetupTab(state: AppState) {
             }
 
             if (p.type == BibType.RELAY) Section(s["setup.legColors"]) { LegColors(state) }
+
+            Section(s["graphics.title"]) {
+                Text(s["graphics.hint"], style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                GraphicButtons(state, dialogs)
+                GraphicList(state, withFields = false)
+            }
 
             Section(s["setup.print"]) {
                 RadioRow(s["setup.sheet"], p.sheet, Sheet.entries, { s["sheet.${it.name}"] }) { state.project = p.copy(sheet = it) }

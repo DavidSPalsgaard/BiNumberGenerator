@@ -82,7 +82,8 @@ private fun run(args: Array<String>) {
     fun opt(key: String) = opts[key]?.last()
 
     val projectFile = opt("project")?.let(::File)
-    var project = projectFile?.let { BibProject.fromJson(it.readText()) } ?: BibProject()
+    val projectData = projectFile?.let { ProjectFiles.load(it) }
+    var project = projectData?.project ?: BibProject()
     opt("type")?.let { v -> project = project.copy(type = enumOf<BibType>(v, "--type")) }
     opt("lang")?.let { project = project.copy(language = it) }
     opt("sort")?.let { v -> project = project.copy(sortBy = enumOf<SortBy>(v, "--sort")) }
@@ -108,6 +109,8 @@ private fun run(args: Array<String>) {
         val p = StartListParser.parse(file.readBytes(), zone)
         lists += StartList(p.event, file.name, System.currentTimeMillis(), p.entries, date = p.date)
     }
+    // Uden startliste på kommandolinjen: startlisterne gemt i projektfilen
+    if (lists.isEmpty()) projectData?.lists?.filterNotNull()?.let { lists += it }
     if (lists.isEmpty()) throw IllegalArgumentException("Angiv en startliste (fil eller --ofeed)")
     if (lists.size > 1 && opt("type") == null && projectFile == null) project = project.copy(type = BibType.MULTIDAY)
 
@@ -122,8 +125,8 @@ private fun run(args: Array<String>) {
     val set = BibBuilder.build(project, lists, opts["class"].orEmpty().toSet())
     if (set.bibs.isEmpty()) fail("Ingen løbere med startnummer i startlisten (${set.withoutNumber} uden startnummer)")
     val out = File(opt("out") ?: "startnumre.pdf")
-    PdfWriter.write(set.bibs, project, out, projectFile?.absoluteFile?.parentFile)
-    opt("save-project")?.let { File(it).writeText(project.toJson()) }
+    PdfWriter.write(set.bibs, project, out)
+    opt("save-project")?.let { ProjectFiles.save(project, File(it), lists) }
 
     println("${set.bibs.size} startnumre skrevet til ${out.path}")
     if (set.withoutNumber > 0) println("${set.withoutNumber} løbere uden startnummer er sprunget over")

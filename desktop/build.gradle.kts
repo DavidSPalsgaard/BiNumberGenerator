@@ -5,6 +5,9 @@ plugins {
     id("org.jetbrains.compose")
 }
 
+/** Programmets version – vises under "Om" og bruges til installationspakkerne. */
+val appVersion = "1.0.0"
+
 java {
     sourceCompatibility = JavaVersion.VERSION_17
     targetCompatibility = JavaVersion.VERSION_17
@@ -13,9 +16,14 @@ kotlin {
     compilerOptions { jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17) }
 }
 
+tasks.processResources {
+    inputs.property("version", appVersion)
+    filesMatching("app.properties") { expand("version" to appVersion) }
+}
+
 dependencies {
     implementation(project(":core"))
-    implementation("org.apache.pdfbox:pdfbox:3.0.3")
+    implementation("org.apache.pdfbox:pdfbox:3.0.8")
     // Pakkerne bygges på hvert styresystem for sig (se .github/workflows/build.yml)
     implementation(compose.desktop.currentOs)
     implementation(compose.material3)
@@ -35,7 +43,7 @@ compose.desktop {
                 org.jetbrains.compose.desktop.application.dsl.TargetFormat.Deb,
             )
             packageName = "BiNumreGenerator"
-            packageVersion = "1.0.0"
+            packageVersion = appVersion
             description = "Startnumre til orienteringsløb"
             vendor = "BiNumreGenerator"
             modules("java.desktop", "java.prefs", "java.instrument", "jdk.unsupported", "java.xml", "java.naming", "java.net.http", "jdk.crypto.ec", "jdk.charsets", "jdk.localedata")

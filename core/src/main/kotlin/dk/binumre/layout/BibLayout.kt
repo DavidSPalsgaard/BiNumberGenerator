@@ -37,6 +37,8 @@ object BibLayout {
     private const val LEG_BAND = 16.0
     private const val ROW = 7.5
     const val FOLD_SIZE = 14.0
+    /** Standardhøjden af feltet til startnummeret (cifrene bliver ca. 44 mm høje). */
+    private const val NUMBER_HEIGHT = 46.0
     /** Flerdagesløb: højden af løberens felt med én kasse pr. etape. */
     private const val MULTI_INFO = 30.0
 
@@ -49,28 +51,29 @@ object BibLayout {
         val split = HEIGHT - infoH
         val relay = type == BibType.RELAY
         val top0 = if (relay) LEG_BAND else 0.0
-        val top = top0 + 11.0
-        val barcodeTop = split - 15.0
+        val top = top0 + 9.5
+        val barcodeTop = split - 14.0
         val clubBase = barcodeTop - 4.0
-        val nameBase = clubBase - 10.0
-        val numberBottom = nameBase - 11.0
+        val nameBase = clubBase - 8.0
+        val numberBottom = nameBase - 9.0
         fun e(kind: ElementKind, x: Double, y: Double, w: Double, h: Double, visible: Boolean = true, rotated: Boolean = false, align: Align = Align.CENTER) =
             BibElement(kind, x, y, w, h, visible, rotated, align)
         val inner = WIDTH - 2 * MARGIN
         return listOfNotNull(
             if (relay) e(ElementKind.LEG_BAND, 0.0, 0.0, WIDTH, LEG_BAND) else null,
             if (relay) e(ElementKind.LEG_STRIPE, 0.0, HEIGHT - 3.0, WIDTH, 3.0) else null,
-            e(ElementKind.EVENT_NAME, 30.0, top0 + 2.5, WIDTH - 60.0, 7.6),
-            e(ElementKind.CLASS, MARGIN + 6.0, top0 + 2.5, 30.0, 7.6, visible = false, align = Align.LEFT),
-            e(ElementKind.START_TIME, WIDTH - MARGIN - 36.0, top0 + 2.5, 30.0, 7.6, visible = false, align = Align.RIGHT),
-            e(ElementKind.NUMBER, MARGIN, top + 1.0, inner, numberBottom - top - 2.0),
-            e(ElementKind.NAME, MARGIN, nameBase - 10.2, inner, 12.9),
-            e(ElementKind.CLUB, MARGIN, clubBase - 7.0, inner, 8.8, visible = !relay),
-            e(ElementKind.TEAM, MARGIN, clubBase - 7.0, inner, 8.8, visible = relay),
-            e(ElementKind.CARD, MARGIN, split - 12.0, 60.0, 8.2, align = Align.LEFT),
-            e(ElementKind.COURSE, 72.0, split - 12.0, 46.0, 8.2, visible = false, align = Align.LEFT),
+            e(ElementKind.EVENT_NAME, 30.0, top0 + 2.5, WIDTH - 60.0, 6.2),
+            e(ElementKind.CLASS, MARGIN + 6.0, top0 + 2.5, 30.0, 6.2, visible = false, align = Align.LEFT),
+            e(ElementKind.START_TIME, WIDTH - MARGIN - 36.0, top0 + 2.5, 30.0, 6.2, visible = false, align = Align.RIGHT),
+            // Nummeret er ca. 4,5 cm højt og centreret – plads til logoer og sponsorer over og under
+            e(ElementKind.NUMBER, MARGIN, (top + numberBottom) / 2 - minOf(NUMBER_HEIGHT, numberBottom - top - 2.0) / 2, inner, minOf(NUMBER_HEIGHT, numberBottom - top - 2.0)),
+            e(ElementKind.NAME, MARGIN, nameBase - 7.9, inner, 10.0),
+            e(ElementKind.CLUB, MARGIN, clubBase - 5.6, inner, 7.0, visible = !relay),
+            e(ElementKind.TEAM, MARGIN, clubBase - 5.6, inner, 7.0, visible = relay),
+            e(ElementKind.CARD, MARGIN, split - 10.5, 60.0, 6.6, align = Align.LEFT),
+            e(ElementKind.COURSE, 72.0, split - 10.5, 46.0, 6.6, visible = false, align = Align.LEFT),
             e(ElementKind.LEG, WIDTH - MARGIN - 24.0, top0 + 1.0, 24.0, 22.0, visible = false, align = Align.RIGHT),
-            e(ElementKind.BARCODE, WIDTH - MARGIN - 80.0, barcodeTop, 80.0, 12.0),
+            e(ElementKind.BARCODE, WIDTH - MARGIN - 80.0, barcodeTop, 80.0, 11.0),
             e(ElementKind.INFO, 0.0, split, WIDTH, infoH, rotated = true),
             e(ElementKind.FOLD, 0.0, 0.0, FOLD_SIZE, FOLD_SIZE),
         )
@@ -180,8 +183,8 @@ object BibLayout {
             for ((field, col) in fields.zip(cols)) {
                 val (label, value, w0) = col
                 val w = inner * w0 / total
-                if (value.isNotEmpty()) fit(c, label, x, f.y + 8.0 * sy, BibFont.REGULAR, 3.8 * k(sy), w - 3.0 * sx, Align.LEFT, GREY)
-                fit(c, value, x, f.y + 20.0 * sy, BibFont.BOLD, (if (field == InfoField.START_TIME) 12.0 else 9.0) * k(sy), w - 3.0 * sx, Align.LEFT)
+                if (value.isNotEmpty()) fit(c, label, x, f.y + 8.0 * sy, BibFont.REGULAR, 3.2 * k(sy), w - 3.0 * sx, Align.LEFT, GREY)
+                fit(c, value, x, f.y + 18.5 * sy, BibFont.BOLD, (if (field == InfoField.START_TIME) 9.5 else 7.0) * k(sy), w - 3.0 * sx, Align.LEFT)
                 x += w
             }
             return
@@ -209,22 +212,22 @@ object BibLayout {
             val tx = x + pad
             fun line(text: String, baseline: Double, font: BibFont, size: Double, color: Int = 0x000000) =
                 fit(c, text, tx, top + baseline * sy, font, size * k(sy), w, Align.LEFT, color)
-            line(stage.label.ifEmpty { "${t.stage} ${i + 1}" }, 5.0, BibFont.BOLD, 3.6, GREY)
+            line(stage.label.ifEmpty { "${t.stage} ${i + 1}" }, 5.0, BibFont.BOLD, 3.2, GREY)
             if (s == null) {
-                line("–", 13.0, BibFont.BOLD, 7.0)
+                line("–", 12.0, BibFont.BOLD, 5.8)
                 continue
             }
-            if (InfoField.START_TIME in fields) line(time(s.start, zone, t), 12.5, BibFont.BOLD, 7.0)
+            if (InfoField.START_TIME in fields) line(time(s.start, zone, t), 11.8, BibFont.BOLD, 5.8)
             val second = listOfNotNull(
                 s.cls.takeIf { InfoField.CLASS in fields && it.isNotEmpty() },
                 course(s, project.language).takeIf { InfoField.COURSE in fields && it.isNotEmpty() },
             ).joinToString(" · ")
-            line(second, 17.8, BibFont.REGULAR, 3.6)
+            line(second, 17.3, BibFont.REGULAR, 3.2)
             val third = listOfNotNull(
                 s.startName.takeIf { InfoField.START_NAME in fields && it.isNotEmpty() }?.let { "${t.start} $it" },
                 stage.distance(s.startName).takeIf { InfoField.DISTANCE in fields && it.isNotEmpty() },
             ).joinToString(" · ")
-            line(third, 22.6, BibFont.REGULAR, 3.6)
+            line(third, 21.8, BibFont.REGULAR, 3.2)
         }
     }
 

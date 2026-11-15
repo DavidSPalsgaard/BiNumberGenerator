@@ -38,7 +38,6 @@ fun StartScreen(state: AppState, dialogs: FileDialogs) {
     var stages by remember { mutableStateOf(3) }
     Box(Modifier.fillMaxSize()) {
         ContourBackground(Modifier.fillMaxSize())
-        Box(Modifier.align(Alignment.TopEnd).padding(16.dp)) { LanguageMenu(state) }
         Column(Modifier.align(Alignment.Center).padding(32.dp), horizontalAlignment = Alignment.CenterHorizontally) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 ControlFlag(64.dp)
@@ -77,6 +76,16 @@ fun StartScreen(state: AppState, dialogs: FileDialogs) {
             Spacer(Modifier.height(32.dp))
             OutlinedButton(onClick = { dialogs.open(s["dialog.openProject"], listOf("json")).firstOrNull()?.let(state::openProject) }) {
                 Text(s["start.open"])
+            }
+            Spacer(Modifier.height(24.dp))
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                var about by remember { mutableStateOf(false) }
+                androidx.compose.material3.TextButton(onClick = { openWebsite(state) }) { Text(s["menu.help"]) }
+                Text("·", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                androidx.compose.material3.TextButton(onClick = { about = true }) { Text(s["menu.about"]) }
+                Text("·  " + dk.binumre.desktop.AppInfo.COPYRIGHT + "  ·  " + s.format("about.version", dk.binumre.desktop.AppInfo.version),
+                    style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                if (about) AboutDialog(state) { about = false }
             }
         }
     }

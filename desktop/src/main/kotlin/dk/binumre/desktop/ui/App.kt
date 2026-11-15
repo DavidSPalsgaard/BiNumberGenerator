@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.AssistChip
@@ -170,8 +171,8 @@ private fun MainScreen(state: AppState, dialogs: FileDialogs, askDiscard: (() ->
                 onClick = { askDiscard { state.newProject() } },
                 icon = { Icon(Icons.Default.Add, contentDescription = null) },
                 label = { Text(s["menu.new"]) },
-                modifier = Modifier.padding(bottom = 12.dp),
             )
+            HelpItems(state)
         }
         VerticalDivider(color = MaterialTheme.colorScheme.outlineVariant)
         Column(Modifier.weight(1f).fillMaxHeight()) {
@@ -180,13 +181,30 @@ private fun MainScreen(state: AppState, dialogs: FileDialogs, askDiscard: (() ->
             Box(Modifier.weight(1f).fillMaxWidth()) {
                 when (state.page) {
                     Page.LIST -> StartListTab(state, dialogs)
-                    Page.SETUP -> SetupTab(state)
+                    Page.SETUP -> SetupTab(state, dialogs)
                     Page.DESIGN -> EditorTab(state, dialogs)
                 }
             }
             StatusBar(state)
         }
     }
+}
+
+/** Hjælp (hjemmesiden) og Om (version, ophavsret og licenser). */
+@Composable
+fun androidx.compose.foundation.layout.ColumnScope.HelpItems(state: AppState) {
+    val s = state.strings
+    var about by remember { mutableStateOf(false) }
+    NavigationRailItem(
+        selected = false, onClick = { openWebsite(state) },
+        icon = { Icon(AppIcons.Help, contentDescription = null) }, label = { Text(s["menu.help"]) },
+    )
+    NavigationRailItem(
+        selected = false, onClick = { about = true },
+        icon = { Icon(Icons.Default.Info, contentDescription = null) }, label = { Text(s["menu.about"]) },
+        modifier = Modifier.padding(bottom = 12.dp),
+    )
+    if (about) AboutDialog(state) { about = false }
 }
 
 @Composable
@@ -218,26 +236,12 @@ private fun TopBar(state: AppState, dialogs: FileDialogs) {
             Icon(AppIcons.Save, null, Modifier.size(18.dp)); Spacer(Modifier.width(6.dp)); Text(s["menu.save"])
         }
         TextButton(onClick = { saveProject(state, dialogs, true) }) { Text(s["menu.saveAs"]) }
-        LanguageMenu(state)
         Spacer(Modifier.width(4.dp))
         OutlinedButton(onClick = { state.printRequest = PrintScope.All }) {
             Icon(AppIcons.Pdf, null, Modifier.size(18.dp)); Spacer(Modifier.width(6.dp)); Text(s["menu.pdf"])
         }
         Button(onClick = { state.printRequest = if (state.project.printed.isNotEmpty() && state.notPrinted.isNotEmpty()) PrintScope.NotPrinted else PrintScope.All }) {
             Icon(AppIcons.Print, null, Modifier.size(18.dp)); Spacer(Modifier.width(8.dp)); Text(s["menu.print"])
-        }
-    }
-}
-
-@Composable
-fun LanguageMenu(state: AppState) {
-    var open by remember { mutableStateOf(false) }
-    Box {
-        TextButton(onClick = { open = true }) { Text(Strings.languageName(state.strings.language)) }
-        DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
-            for (code in Strings.available) {
-                DropdownMenuItem(text = { Text(Strings.languageName(code)) }, onClick = { state.setLanguage(code); open = false })
-            }
         }
     }
 }

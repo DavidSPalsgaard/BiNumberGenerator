@@ -43,6 +43,8 @@ jobs:
           cp core/src/test/resources/*_eksempel.xml "$pak/Testfiler/"
           cp testpakke/startliste_eksempel.* testpakke/flerdages_alle_etaper.xml testpakke/logo_eksempel.png testpakke/stafet_projekt.json "$pak/Testfiler/"
           cp testpakke/TESTVEJLEDNING.txt testpakke/*.bat "$pak/"
+          cp LICENSE.txt "$pak/LICENS.txt"
+          cp -r desktop/src/main/resources/licenses "$pak/Licenser"
           ls -R "$pak" | head -40
           powershell -Command "Compress-Archive -Path '$pak' -DestinationPath ud/BiNumreGenerator-testpakke.zip"
 

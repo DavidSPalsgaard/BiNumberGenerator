@@ -44,24 +44,47 @@ class GuiLogicTest {
     // ---------- Projektfil ----------
 
     @Test
-    fun grafikstierErRelativeIProjektfilen() {
+    fun alleOplysningerLiggerIProjektfilen() {
         val dir = tempDir()
-        val project = BibProject(
-            eventName = "Testløbet",
-            graphics = listOf(
-                Graphic(File(dir, "logo.png").path, 1.0, 2.0, 30.0, 10.0),
-                Graphic(File(dir, "grafik/sponsor.jpg").path, 5.0, 6.0, 30.0, 10.0),
-            ),
-        )
+        val logo = File(dir, "logo.png")
+        ImageIO.write(BufferedImage(200, 100, BufferedImage.TYPE_INT_RGB), "png", logo)
+        val state = AppState()
+        state.start(BibType.SINGLE)
+        state.loadFiles(listOf(resource("startliste_eksempel.xml")))
+        state.addGraphic(logo, dk.binumre.model.GraphicRole.EVENT_LOGO)
+        // Rettelser i startlisten: et nummer og et fravalg
+        state.updateEntries(0) { _, e -> if (e.bib.isEmpty()) e.copy(bib = "102") else if (e.bib == "301") e.copy(excluded = true) else e }
+        assertTrue(state.dirty)
         val file = File(dir, "loeb.json")
-        ProjectFiles.save(project, file)
-        val stored = BibProject.fromJson(file.readText())
-        assertEquals(listOf("logo.png", "grafik/sponsor.jpg"), stored.graphics.map { it.file })
-        assertEquals(project, ProjectFiles.load(file))
+        state.saveProject(file)
+        assertFalse(state.dirty)
 
-        // Mappen kan flyttes: stierne følger projektfilen
-        val moved = File(tempDir(), "loeb.json").also { file.copyTo(it) }
-        assertEquals(File(moved.parentFile, "logo.png").path, ProjectFiles.load(moved).graphics[0].file)
+        // Kun projektfilen gives videre – billedet og startlisten følger med
+        val other = File(tempDir(), "kopi.json").also { file.copyTo(it) }
+        val images = tempDir()
+        val data = ProjectFiles.load(other, images)
+        assertEquals(listOf("101", "102"), dk.binumre.model.BibBuilder.build(data.project, data.lists).bibs.map { it.number })
+        assertEquals(state.lists, data.lists)
+        val g = data.project.graphics.single()
+        assertEquals(dk.binumre.model.GraphicRole.EVENT_LOGO, g.role)
+        assertTrue(File(g.file).isFile)
+        assertTrue(File(g.file).parentFile == images)
+        assertEquals(logo.readBytes().toList(), File(g.file).readBytes().toList())
+
+        // Åbnet i programmet: samme løb, ikke ændret
+        val opened = AppState()
+        opened.openProject(other)
+        assertNull(opened.error)
+        assertEquals(state.bibSet.bibs.map { it.number }, opened.bibSet.bibs.map { it.number })
+        assertFalse(opened.dirty)
+    }
+
+    @Test
+    fun ældreProjektfilMedRelativeStier() {
+        val dir = tempDir()
+        val old = BibProject(graphics = listOf(Graphic("grafik/logo.png", 1.0, 2.0, 30.0, 10.0)))
+        val file = File(dir, "gammel.json").also { it.writeText(old.toJson()) }
+        assertEquals(File(dir, "grafik/logo.png").absoluteFile.normalize().path, ProjectFiles.load(file).project.graphics.single().file)
     }
 
     // ---------- Tabel ----------
@@ -324,6 +347,16 @@ class GuiLogicTest {
         state.addGraphic(logo)
         assertEquals(Graphic(logo.absolutePath, 8.0, 8.0, 40.0, 20.0), state.project.graphics.single())
         assertEquals(Selection(true, 0), state.selection)
+        // Logoer efter rolle: løbets øverst til venstre, arrangørens øverst til højre, sponsorer i midten forneden
+        state.addGraphic(logo, dk.binumre.model.GraphicRole.EVENT_LOGO)
+        state.addGraphic(logo, dk.binumre.model.GraphicRole.CLUB_LOGO)
+        state.addGraphic(logo, dk.binumre.model.GraphicRole.SPONSOR)
+        val (event, club, sponsor) = state.project.graphics.drop(1)
+        assertTrue(event.x < 30 && event.y < 5)
+        assertTrue(club.x + club.width > 180 && club.y < 5)
+        assertTrue(sponsor.y > 80 && sponsor.x in 60.0..120.0)
+        assertEquals(2.0, event.width / event.height, 0.01)
+        repeat(3) { state.removeGraphic(1) }
         // Vilkårligt mange billeder
         repeat(14) { state.addGraphic(logo) }
         assertEquals(15, state.project.graphics.size)
@@ -341,7 +374,9 @@ class GuiLogicTest {
 
         val other = AppState()
         other.openProject(file)
-        assertEquals(state.project, other.project)
+        // Billedet er pakket ud af projektfilen (anden sti, samme indhold og placering)
+        assertEquals(state.project.copy(graphics = emptyList()), other.project.copy(graphics = emptyList()))
+        assertEquals(state.project.graphics.map { it.copy(file = "") }, other.project.graphics.map { it.copy(file = "") })
         other.removeGraphic(0)
         assertTrue(other.dirty)
 

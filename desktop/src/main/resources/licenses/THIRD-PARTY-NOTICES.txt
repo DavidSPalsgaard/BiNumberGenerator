@@ -1,0 +1,20 @@
+BiNumreGenerator bruger følgende komponenter fra andre. De er alle frie og må bruges og videregives på de nævnte vilkår. Licensteksterne følger med programmet (mappen "licenses" i programfilen og "lib/runtime/legal" for Java-runtime).
+
+Apache License 2.0 (Apache-2.0.txt)
+  - Apache PDFBox, FontBox, PDFBox IO 3.0.8 – The Apache Software Foundation (se NOTICE.txt og PDFBox-LICENSE.txt)
+  - Apache Commons Logging – The Apache Software Foundation (se NOTICE.txt)
+  - Kotlin standardbibliotek, kotlinx.coroutines, kotlinx-datetime, atomicfu – JetBrains s.r.o.
+  - Compose Multiplatform, Skiko (Skia), JetBrains Annotations – JetBrains s.r.o.
+  - AndroidX (annotation, collection, lifecycle) – The Android Open Source Project
+  - Material Design-ikoner (også de ikoner der er tegnet i programmet) – Google LLC
+
+Public Domain
+  - JSON in Java (org.json) – Sean Leary m.fl.
+
+Bitstream Vera / DejaVu-licensen (DejaVu-LICENSE.txt)
+  - DejaVu Sans og DejaVu Sans Bold – skrifterne på startnummeret (indlejres i PDF og udskrift)
+
+GNU General Public License v2 med Classpath Exception
+  - Java-runtime (OpenJDK, Eclipse Temurin), der følger med programmet så det kan køre uden installation. Licenserne ligger i lib/runtime/legal. Kildekoden findes på https://openjdk.org.
+
+Skia, som Skiko bygger på, er under BSD 3-Clause-licensen – Google LLC.

@@ -64,11 +64,18 @@ loeb.json]` åbner vinduet med startlisten og projektet indlæst.
   Vilkårligt mange billeder.
 - **Udskriv** sender direkte til en printer (styresystemets printerdialog); vælg alle, kun dem der
   ikke er udskrevet før (nytilkomne), eller én løber. **Eksportér PDF** gemmer det samme som PDF.
-- **Gem projekt** gemmer opsætningen, layoutet og hvad der er udskrevet som JSON (grafikstier
-  relative til projektfilen). Startlisten og rettelser i den gemmes ikke.
-- **Sprog:** programmets tekster ligger i `desktop/src/main/resources/i18n/<sprogkode>.properties`
-  (UTF-8). Dansk og engelsk er oversat; et nyt sprog tilføjes ved at oversætte `en.properties`
-  til en fil med en af sprogkoderne fra `BibTexts.languages`. Manglende tekster vises på engelsk.
+- **Gem projekt** gemmer alt i én JSON-fil, der kan gives videre: opsætning, layout, startlisterne
+  med rettelser, hvad der er udskrevet, OFeed-forbindelsen (med adgangskode) og billederne
+  (indlejret). Ved åbning pakkes billederne ud i `%LOCALAPPDATA%\BiNumreGenerator\grafik`
+  (Linux/Mac: `~/.cache/BiNumreGenerator/grafik`).
+- **Logoer og sponsorer:** knapper til løbets logo, arrangørens logo og sponsorer (under Opsætning
+  og i Design), hver med sin standardplads.
+- **Sprog:** programmets sprog følger computerens. Teksterne ligger i
+  `desktop/src/main/resources/i18n/<sprogkode>.properties` (UTF-8). Dansk og engelsk er oversat;
+  et nyt sprog tilføjes ved at oversætte `en.properties` til en fil med en af sprogkoderne fra
+  `BibTexts.languages`. Manglende tekster vises på engelsk. Startnummerets sprog vælges for sig.
+- **Hjælp og Om:** hjælp og nye versioner på https://orientering.palsgaard.net; version, ophavsret
+  og licenser for de komponenter programmet bruger.
 
 ### Kommandolinje
 Kommandolinjen er den samme programfil med argumenter (`bin/BiNumreGenerator` på Linux og Mac;
@@ -109,6 +116,13 @@ Udskrift: to A5 pr. A4-ark med skærelinje (`--sheet a4x2`, standard) eller ét 
 - `language`: sprog på startnummeret – engelsk, dansk og 22 andre europæiske sprog
   (`layout/BibTexts.kt`). "Afstand til start", "Tur" og "Etape" er oversat uden gennemsyn af
   modersmålstalende.
+
+## Ophavsret og licenser
+Copyright © 2026 David S. Palsgaard. Alle rettigheder forbeholdes – se `LICENSE.txt`.
+Programmet bruger komponenter under frie licenser (Apache 2.0, Public Domain, DejaVu-licensen og
+OpenJDK under GPLv2 med Classpath Exception); oversigten og licensteksterne ligger i
+`desktop/src/main/resources/licenses/` og vises under "Om" i programmet. Versionen sættes i
+`desktop/build.gradle.kts` (`appVersion`).
 
 ## Struktur
 - `core/` – uden platformsafhængigheder (hverken Compose eller PDFBox): `startlist/`, `ofeed/`,

@@ -17,6 +17,7 @@ import dk.binumre.model.BibSet
 import dk.binumre.model.BibStage
 import dk.binumre.model.BibType
 import dk.binumre.model.Graphic
+import dk.binumre.model.GraphicRole
 import dk.binumre.model.OFeedSource
 import dk.binumre.ofeed.mergeChanges
 import dk.binumre.model.Stage
@@ -48,8 +49,8 @@ sealed interface PrintScope {
 class AppState {
     private val prefs: Preferences? = runCatching { Preferences.userNodeForPackage(AppState::class.java) }.getOrNull()
 
-    var strings by mutableStateOf(Strings.load(prefs?.get("language", null) ?: Strings.systemLanguage()))
-        private set
+    /** Programmets sprog følger computerens (startnummerets sprog vælges for sig under Opsætning). */
+    val strings: Strings = Strings.load(Strings.systemLanguage())
     var screen by mutableStateOf(Screen.START)
     var page by mutableStateOf(Page.LIST)
     var project by mutableStateOf(BibProject())
@@ -72,7 +73,9 @@ class AppState {
     val images = ImageCache()
 
     val zone: ZoneId get() = BibLayout.zoneOf(project)
-    val dirty: Boolean get() = project != savedProject
+    /** Startlisterne som de senest blev gemt eller åbnet. */
+    private var savedLists by mutableStateOf(listOf<StartList?>())
+    val dirty: Boolean get() = project != savedProject || lists.dropLastWhile { it == null } != savedLists.dropLastWhile { it == null }
 
     /** Antal pladser til startlister. */
     val slotCount: Int get() = if (project.type == BibType.MULTIDAY && !project.sharedStartList) project.stageCount else 1
@@ -101,11 +104,6 @@ class AppState {
         )
     }
 
-    fun setLanguage(language: String) {
-        strings = Strings.load(language)
-        runCatching { prefs?.put("language", strings.language) }
-    }
-
     var lastDir: File?
         get() = prefs?.get("dir", null)?.let(::File)?.takeIf { it.isDirectory }
         set(value) { runCatching { if (value != null) prefs?.put("dir", value.path) } }
@@ -118,6 +116,7 @@ class AppState {
         savedProject = project
         projectFile = null
         lists = emptyList()
+        savedLists = lists
         selection = null
         previewIndex = 0
         message = ""
@@ -126,10 +125,14 @@ class AppState {
 
     /** Nyt løb af typen [type] (flerdagesløb med [stages] etaper). */
     fun start(type: BibType, stages: Int = 2) {
-        project = BibProject(type = type, stages = List(if (type == BibType.MULTIDAY) stages.coerceIn(1, MAX_STAGES) else 1) { Stage() })
+        project = BibProject(
+            type = type, language = Strings.bibLanguage(),
+            stages = List(if (type == BibType.MULTIDAY) stages.coerceIn(1, MAX_STAGES) else 1) { Stage() },
+        )
         savedProject = project
         projectFile = null
         lists = emptyList()
+        savedLists = lists
         selection = null
         previewIndex = 0
         page = Page.LIST
@@ -155,8 +158,13 @@ class AppState {
     }
 
     fun openProject(file: File) = guarded {
-        project = ProjectFiles.load(file)
+        val data = ProjectFiles.load(file)
+        project = data.project
         savedProject = project
+        lists = data.lists
+        savedLists = lists
+        previewIndex = 0
+        page = Page.LIST
         projectFile = file
         selection = null
         screen = Screen.MAIN
@@ -164,8 +172,9 @@ class AppState {
     }
 
     fun saveProject(file: File) = guarded {
-        ProjectFiles.save(project, file)
+        ProjectFiles.save(project, file, lists)
         savedProject = project
+        savedLists = lists
         projectFile = file
         message = strings.format("msg.saved", file.name)
     }
@@ -301,14 +310,15 @@ class AppState {
         selection = null
     }
 
-    fun addGraphic(file: File) {
+    fun addGraphic(file: File, role: GraphicRole = GraphicRole.OTHER) {
         val image = images.get(file.absolutePath)
         if (image == null) {
             error = strings.format("error.image", file.name)
             return
         }
-        val frame = GraphicEdit.place(image.width, image.height, project.graphics.size)
-        project = project.copy(graphics = project.graphics + Graphic(file.absolutePath, 0.0, 0.0, 0.0, 0.0).moved(frame))
+        val existing = if (role == GraphicRole.OTHER) project.graphics.size else project.graphics.count { it.role == role }
+        val frame = GraphicEdit.placeFor(role, image.width, image.height, existing, project.stageCount)
+        project = project.copy(graphics = project.graphics + Graphic(file.absolutePath, 0.0, 0.0, 0.0, 0.0, role).moved(frame))
         selection = Selection(graphic = true, index = project.graphics.lastIndex)
     }
 

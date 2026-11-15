@@ -1,4 +1,4 @@
-BiNumreGenerator – testpakke (runde 3)
+BiNumreGenerator – testpakke (runde 4)
 ======================================
 
 Indhold
@@ -8,10 +8,26 @@ Indhold
   Installation\                .msi-fil, hvis du hellere vil installere (startmenu og genvej,
                                kræver ikke administrator)
   Testfiler\                   Startlister, logo og projektfil til afprøvningen nedenfor
+  LICENS.txt, Licenser\        Ophavsret og licenser for de komponenter programmet bruger
 
 Pak hele zip-filen ud først (højreklik → "Udpak alle"). Programmet kan ikke køre inde fra zip-filen.
 Hvis Windows siger "Windows beskyttede din pc": klik "Flere oplysninger" → "Kør alligevel".
 
+
+Nyt i runde 4
+-------------
+ - Projektfilen rummer alt: opsætning, layout, startlisterne med dine rettelser, hvad der er
+   udskrevet, OFeed-forbindelsen og selve billederne. Filen kan gives videre og åbnes på en anden PC.
+ - Mindre tekst på startnummeret – også selve nummeret (ca. 4,5 cm), så der er plads til logoer.
+ - Logoer og sponsorer: knapper til "Løbets logo", "Arrangørens logo" og "Sponsor" (under
+   Opsætning og i Design → Grafik). De placeres på en fornuftig plads og kan flyttes.
+ - Programmets sprog følger Windows' sprog (dansk eller engelsk). Startnummerets sprog vælges
+   stadig under Opsætning.
+ - Hjælp og Om (nederst i venstre side og på startskærmen): hjælp og nye versioner på
+   orientering.palsgaard.net; ophavsret, version og licenser.
+
+ Test: lav et løb med startliste, rettelser og logo → Gem → kopiér KUN projektfilen til en anden
+ mappe (eller PC) → åbn den: startlisten, rettelserne og logoet skal være der.
 
 Nyt i runde 3
 -------------
