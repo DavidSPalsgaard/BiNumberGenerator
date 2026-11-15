@@ -21,12 +21,15 @@ løbet → Integrationer → O Checklist). Koden i `startlist/` og `ofeed/` er k
 og udvidet med tur, holdnavn og banelængde. Løbere uden startnummer springes over.
 
 ## Hent og kør (Windows)
-Under **Releases → Seneste udgave** på GitHub ligger to filer, som bygges automatisk ved hver
-ændring på `main` (`.github/workflows/build.yml`):
-- `BiNumreGenerator-windows.zip` – pak ud og kør `BiNumreGenerator.exe`. Intet skal installeres;
-  Java-runtime følger med i mappen. Mappen `eksempler` har startlister til afprøvning.
-- `BiNumreGenerator-1.0.0.msi` – installerer i brugerens egen mappe med startmenu og genvej
-  (kræver ikke administrator).
+Under **Releases → Seneste udgave** på GitHub ligger `BiNumreGenerator-testpakke.zip`, som bygges
+automatisk ved hver ændring på `main` (`.github/workflows/build.yml`). Pak den ud; den indeholder:
+- `Program\BiNumreGenerator.exe` (eller `Start BiNumreGenerator.bat`) – intet skal installeres;
+  Java-runtime følger med i mappen.
+- `Installation\BiNumreGenerator-1.0.0.msi` – installerer i brugerens egen mappe med startmenu og
+  genvej (kræver ikke administrator).
+- `Testfiler\` og `TESTVEJLEDNING.txt` – startlister (XML, CSV, Excel), logo og projektfil med en
+  trin-for-trin afprøvning. Filerne ligger i `testpakke/` (XML-filerne i `core/src/test/resources/`),
+  og en test sikrer, at de passer til vejledningen.
 
 Windows viser måske "Windows beskyttede din pc", fordi programmet ikke er kodesigneret endnu:
 klik "Flere oplysninger" → "Kør alligevel".

@@ -1,0 +1,69 @@
+BiNumreGenerator – testpakke
+============================
+
+Indhold
+-------
+  Start BiNumreGenerator.bat   Starter programmet (samme som Program\BiNumreGenerator.exe)
+  Program\                     Programmet med indbygget Java – intet skal installeres
+  Installation\                .msi-fil, hvis du hellere vil installere (startmenu og genvej,
+                               kræver ikke administrator)
+  Testfiler\                   Startlister, logo og projektfil til afprøvningen nedenfor
+
+Pak hele zip-filen ud først (højreklik → "Udpak alle"). Programmet kan ikke køre inde fra zip-filen.
+
+Hvis Windows siger "Windows beskyttede din pc": klik "Flere oplysninger" → "Kør alligevel".
+Programmet er ikke kodesigneret endnu.
+
+
+Test 1 – enkeltløb (IOF XML)
+----------------------------
+ 1. Start programmet. Fanen "Startliste" er tom.
+ 2. Klik "Indlæs startliste…" og vælg Testfiler\startliste_eksempel.xml.
+    Forvent: 3 løbere; "Bo Prøve" er rød (mangler startnummer); bunden siger 2 startnumre.
+ 3. Klik på Bo Prøve, skriv 102 i Startnummer og klik OK.
+    Forvent: rækken er ikke længere rød; 3 startnumre.
+ 4. Fjern fluebenet ved Carl Demo. Forvent: 2 startnumre.
+ 5. Skriv "anna" i Søg. Forvent: kun Anna vises. Ryd feltet igen.
+ 6. Fanen "Opsætning": skriv 400 m ved "Afstand fra start S1".
+ 7. Fanen "Layout og grafik": klik "Indsæt billede…" og vælg Testfiler\logo_eksempel.png.
+    Træk logoet hen i et hjørne, og træk i et af dets hjørner for at ændre størrelsen.
+    Bladr mellem løberne med pilene under startnummeret.
+ 8. Klik "Skriv PDF…" og gem. Klik "Vis PDF" nederst.
+    Forvent: PDF'en ligner forhåndsvisningen (to startnumre pr. A4-ark).
+ 9. Klik "Gem projekt", luk programmet, start det igen, og klik "Åbn projekt…".
+    Forvent: logo, afstand og løbets navn er der igen. (Startlisten skal indlæses igen.)
+
+Test 2 – stafet
+---------------
+ 1. Klik "Nyt", "Åbn projekt…" og vælg Testfiler\stafet_projekt.json.
+ 2. Indlæs Testfiler\stafet_eksempel.xml.
+ 3. Fanen "Layout og grafik": forvent farvet bånd "Tur 1" (gul), "Tur 2" (blå) … og
+    samme startnummer (12) på alle tre ture. Logoet ligger oven på båndet.
+ 4. "Opsætning" → "Farve pr. tur": skift farve på tur 2, og se forhåndsvisningen ændre sig.
+
+Test 3 – flerdagesløb
+---------------------
+ 1. Klik "Nyt" og "Indlæs startliste…". Vælg BÅDE startliste_eksempel.xml og
+    etape2_eksempel.xml (hold Ctrl nede).
+    Forvent: skabelonen skifter til Flerdagesløb; "Etape 1" og "Etape 2" står over tabellen.
+ 2. "Opsætning" → "Etaper": skriv Lørdag og Søndag som overskrifter.
+ 3. "Layout og grafik": forvent én linje pr. etape i bunden (vendt på hovedet).
+
+Test 4 – CSV og Excel
+---------------------
+ 1. Klik "Nyt" og indlæs Testfiler\startliste_eksempel.csv.
+    Forvent: 5 løbere med æ/ø/å i navnene; Carl Larsen mangler startnummer;
+    Ditte Mølgaard har fri start. Filtrér på klasse med "Alle klasser".
+ 2. Klik "Nyt" og indlæs Testfiler\startliste_eksempel.xlsx.
+    Forvent: 4 løbere; Hanne Åberg mangler startnummer.
+
+Test 5 – sprog og indstillinger
+-------------------------------
+ 1. Klik på sprogknappen (Dansk) øverst til højre og vælg English – og tilbage igen.
+ 2. "Opsætning": skift "Sprog på startnummeret" til fx Svenska og se teksterne i bunden
+    af startnummeret skifte. Prøv også "Efternavn, Fornavn" og "Ét A5 pr. side".
+
+Fejl eller forslag
+------------------
+Skriv hvad du gjorde, hvad du forventede, og hvad der skete – gerne med et skærmbillede.
+Et foto eller en PDF af et tidligere startnummer er velkomment, hvis layoutet skal rettes til.

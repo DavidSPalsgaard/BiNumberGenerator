@@ -1,6 +1,6 @@
-# Bygger og tester på Windows og lægger to filer under GitHub → Releases → "Seneste udgave":
-#   BiNumreGenerator-windows.zip  – pak ud og kør BiNumreGenerator.exe (intet skal installeres)
-#   BiNumreGenerator-*.msi        – installationsfil (startmenu og genvej, kræver ikke administrator)
+# Bygger og tester på Windows og lægger BiNumreGenerator-testpakke.zip under
+# GitHub → Releases → "Seneste udgave": programmet (kører uden installation), .msi-installationsfil,
+# testfiler og TESTVEJLEDNING.txt (indholdet kommer fra mappen testpakke/).
 name: Byg Windows-pakke
 
 on:
@@ -34,19 +34,22 @@ jobs:
       - name: Byg program og installationsfil
         run: ./gradlew :desktop:createDistributable :desktop:packageMsi --console=plain
 
-      - name: Pak den selvstændige udgave
+      - name: Saml testpakken
         run: |
-          app=desktop/build/compose/binaries/main/app/BiNumreGenerator
-          mkdir -p "$app/eksempler"
-          cp core/src/test/resources/*_eksempel.xml "$app/eksempler/"
-          mkdir -p ud
-          powershell -Command "Compress-Archive -Path '$app' -DestinationPath ud/BiNumreGenerator-windows.zip"
-          cp desktop/build/compose/binaries/main/msi/*.msi ud/
+          pak=ud/BiNumreGenerator-testpakke
+          mkdir -p "$pak/Installation" "$pak/Testfiler"
+          cp -r desktop/build/compose/binaries/main/app/BiNumreGenerator "$pak/Program"
+          cp desktop/build/compose/binaries/main/msi/*.msi "$pak/Installation/"
+          cp core/src/test/resources/*_eksempel.xml "$pak/Testfiler/"
+          cp testpakke/startliste_eksempel.* testpakke/logo_eksempel.png testpakke/stafet_projekt.json "$pak/Testfiler/"
+          cp testpakke/TESTVEJLEDNING.txt testpakke/*.bat "$pak/"
+          ls -R "$pak" | head -40
+          powershell -Command "Compress-Archive -Path '$pak' -DestinationPath ud/BiNumreGenerator-testpakke.zip"
 
       - uses: actions/upload-artifact@v4
         with:
           name: BiNumreGenerator-windows
-          path: ud/*
+          path: ud/BiNumreGenerator-testpakke.zip
 
       - name: Opdater "Seneste udgave"
         if: github.ref == 'refs/heads/main'
@@ -54,6 +57,6 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh release delete seneste --yes --cleanup-tag || true
-          gh release create seneste ud/* --prerelease --target "$GITHUB_SHA" \
+          gh release create seneste ud/BiNumreGenerator-testpakke.zip --prerelease --target "$GITHUB_SHA" \
             --title "Seneste udgave" \
-            --notes "Bygget automatisk fra main ($GITHUB_SHA). Hent BiNumreGenerator-windows.zip, pak den ud og kør BiNumreGenerator.exe – eller installer .msi-filen."
+            --notes "Bygget automatisk fra main ($GITHUB_SHA). Hent BiNumreGenerator-testpakke.zip, pak den ud og læs TESTVEJLEDNING.txt."

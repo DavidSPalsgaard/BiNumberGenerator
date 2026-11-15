@@ -201,6 +201,37 @@ class GuiLogicTest {
         assertEquals("123", other.previewBib.number)
     }
 
+    // ---------- Testpakken ----------
+
+    /** Det TESTVEJLEDNING.txt lover om testfilerne. */
+    @Test
+    fun testpakkensFilerSvarerTilVejledningen() {
+        val dir = File("../testpakke")
+        val csv = AppState().apply { loadFiles(listOf(File(dir, "startliste_eksempel.csv"))) }
+        assertNull(csv.error)
+        val entries = csv.lists.single().entries
+        assertEquals(5, entries.size)
+        assertEquals(4, csv.bibSet.bibs.size)
+        assertEquals(1, csv.bibSet.withoutNumber)
+        assertEquals("Carl Larsen", entries.single { it.bib.isEmpty() }.displayName(dk.binumre.startlist.NameFormat.GIVEN_FAMILY))
+        assertNull(entries.single { it.given == "Ditte" }.start)
+        assertEquals("Æse Ørsted", entries.single { it.bib == "14" }.displayName(dk.binumre.startlist.NameFormat.GIVEN_FAMILY))
+
+        val xlsx = AppState().apply { loadFiles(listOf(File(dir, "startliste_eksempel.xlsx"))) }
+        assertNull(xlsx.error)
+        assertEquals(4, xlsx.lists.single().entries.size)
+        assertEquals("Åberg", xlsx.lists.single().entries.single { it.bib.isEmpty() }.family)
+
+        val relay = AppState()
+        relay.openProject(File(dir, "stafet_projekt.json"))
+        assertNull(relay.error)
+        assertEquals(BibType.RELAY, relay.project.type)
+        assertTrue(relay.images.get(relay.project.graphics.single().file) != null)
+        relay.loadFiles(listOf(resource("stafet_eksempel.xml")))
+        assertEquals(listOf("12", "12", "12"), relay.bibSet.bibs.map { it.number })
+        assertEquals("Teststafetten 2026", relay.project.eventName)
+    }
+
     // ---------- Sprog ----------
 
     @Test
