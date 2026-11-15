@@ -232,6 +232,54 @@ class GuiLogicTest {
         assertEquals(keys.toSet(), state.lists[0]!!.entries.map { TableLogic.entryKey(it, BibType.RELAY) }.toSet())
     }
 
+    /** OFeed-forbindelsen huskes; "Opdater" henter kun ændringer og bevarer fravalg. Mod en lokal testserver. */
+    @Test
+    fun ofeedOpdateresUdenNytLink() {
+        fun competitor(id: Int, name: String, bib: Int?) =
+            """{"id":$id,"lastname":"$name","firstname":"Test","organisation":"OK","bibNumber":${bib ?: "null"},"card":${1000 + id},"startTime":null,"status":"Inactive"}"""
+        fun body(vararg c: String) = """{"results":{"data":{"name":"OFeed-løbet","classes":[{"name":"H21","startName":"S1","competitors":[${c.joinToString(",")}]}]}},"meta":{"timestamp":"2026-11-15T10:00:00.000Z"}}"""
+        val requests = mutableListOf<String>()
+        val server = com.sun.net.httpserver.HttpServer.create(java.net.InetSocketAddress("127.0.0.1", 0), 0)
+        server.createContext("/events/42/competitors") { ex ->
+            val query = ex.requestURI.rawQuery.orEmpty()
+            requests += query
+            // Første hentning: alle; derefter kun ændringer (en ny løber og et nyt nummer)
+            val json = if (query.isEmpty()) body(competitor(1, "Alfa", 1), competitor(2, "Beta", 2))
+            else body(competitor(2, "Beta", 22), competitor(3, "Gamma", 3))
+            val bytes = json.toByteArray()
+            ex.sendResponseHeaders(200, bytes.size.toLong())
+            ex.responseBody.use { it.write(bytes) }
+        }
+        server.start()
+        try {
+            val link = "https://stigning.se/ofeed?url=" + java.net.URLEncoder.encode("http://127.0.0.1:${server.address.port}/events", "UTF-8") + "&id=42&pwd=x"
+            val state = AppState()
+            state.start(BibType.SINGLE)
+            val source = dk.binumre.model.OFeedSource(link)
+            state.addOFeed(state.fetchOFeed(source), 0, source)
+            assertEquals(listOf("1", "2"), state.bibSet.bibs.map { it.number })
+            assertEquals(source, state.project.ofeed[0])
+            state.updateEntries(0) { _, e -> if (e.bib == "1") e.copy(excluded = true) else e }
+
+            // Projektet gemmes og åbnes igen: forbindelsen er der stadig
+            val file = File(tempDir(), "ofeed.json")
+            state.saveProject(file)
+            assertEquals(source, BibProject.fromJson(file.readText()).ofeed[0])
+
+            state.setList(0, state.refreshOFeed(0))
+            assertEquals(2, state.lastChanges)
+            assertTrue(requests.last().startsWith("lastUpdate="))
+            // Alfa er stadig fravalgt, Beta har fået nyt nummer, Gamma er kommet til
+            assertEquals(listOf("3", "22"), state.bibSet.bibs.map { it.number })
+
+            // En fil på samme plads afløser forbindelsen
+            state.loadFiles(listOf(resource("startliste_eksempel.xml")))
+            assertTrue(state.project.ofeed.isEmpty())
+        } finally {
+            server.stop(0)
+        }
+    }
+
     @Test
     fun direkteUdskriftSenderSiderneTilPrinteren() {
         val state = AppState()
@@ -253,6 +301,10 @@ class GuiLogicTest {
         val state = AppState()
         state.start(BibType.RELAY)
         assertFalse(state.project.customLayout)
+        // Foldehjørnerne er ét kvadrat i hjørnet
+        val f = state.elements.indexOfFirst { it.kind == dk.binumre.model.ElementKind.FOLD }
+        state.updateElement(f, state.elements[f].copy(x = 50.0, y = 9.0, width = 20.0, height = 12.0))
+        assertEquals(dk.binumre.model.Frame(0.0, 0.0, 20.0, 20.0), state.elements[f].frame)
         val i = state.elements.indexOfFirst { it.kind == dk.binumre.model.ElementKind.NUMBER }
         state.updateElement(i, state.elements[i].copy(x = 20.0, background = 0x5BA4CF, color = 0xFFFFFF))
         assertTrue(state.project.customLayout)

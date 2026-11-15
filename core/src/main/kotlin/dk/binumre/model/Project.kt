@@ -12,6 +12,9 @@ enum class Sheet { A4_2UP, A5 }
 
 enum class SortBy { BIB, CLUB, CLASS, NAME }
 
+/** Hvor en startliste hentes fra OFeed: QR-linket (eller løbs-id) og evt. adgangskode. */
+data class OFeedSource(val link: String, val password: String = "")
+
 /** Et stykke grafik (logo, sponsor …) på startnummeret. Mål i mm fra øverste venstre hjørne. */
 data class Graphic(val file: String, val x: Double, val y: Double, val width: Double, val height: Double) {
     val frame get() = Frame(x, y, width, height)
@@ -47,6 +50,8 @@ data class BibProject(
     val sharedStartList: Boolean = false,
     /** Startnumre der er udskrevet ([Bib.key]) – så nytilkomne kan udskrives for sig. */
     val printed: Set<String> = emptySet(),
+    /** OFeed-forbindelse pr. startliste-plads, så listen kan opdateres uden at indsætte linket igen. */
+    val ofeed: Map<Int, OFeedSource> = emptyMap(),
 ) {
     fun stage(index: Int): Stage = stages.getOrNull(index) ?: Stage()
 
@@ -81,10 +86,12 @@ data class BibProject(
             JSONObject().put("kind", it.kind.name).put("x", it.x).put("y", it.y).put("width", it.width).put("height", it.height)
                 .put("visible", it.visible).put("rotated", it.rotated).put("align", it.align.name)
                 .also { o -> it.color?.let { c -> o.put("color", hex(c)) }; it.background?.let { c -> o.put("background", hex(c)) } }
+                .also { o -> if (it.colorFromLeg) o.put("color", "leg"); if (it.backgroundFromLeg) o.put("background", "leg") }
         }))
         put("infoFields", JSONArray(InfoField.entries.filter { it in infoFields }.map { it.name }))
         put("sharedStartList", sharedStartList)
         put("printed", JSONArray(printed.sorted()))
+        put("ofeed", JSONObject().also { m -> ofeed.forEach { (slot, src) -> m.put(slot.toString(), JSONObject().put("link", src.link).put("password", src.password)) } })
     }.toString(2)
 
     companion object {
@@ -109,22 +116,39 @@ data class BibProject(
                     val dist = s.optJSONObject("distances")
                     Stage(s.optString("label"), dist?.keySet()?.associateWith { dist.optString(it) } ?: emptyMap())
                 },
-                elements = o.optJSONArray("elements").objects().mapNotNull { e ->
+                elements = foldsMerged(o.optJSONArray("elements").objects().mapNotNull { e ->
                     val kind = ElementKind.entries.firstOrNull { it.name == e.optString("kind") } ?: return@mapNotNull null
                     BibElement(
                         kind, e.optDouble("x", 0.0), e.optDouble("y", 0.0), e.optDouble("width", 20.0), e.optDouble("height", 10.0),
                         visible = e.optBoolean("visible", true), rotated = e.optBoolean("rotated", false),
                         align = Align.entries.firstOrNull { it.name == e.optString("align") } ?: Align.CENTER,
-                        color = e.optString("color").ifEmpty { null }?.let(::parseColor),
-                        background = e.optString("background").ifEmpty { null }?.let(::parseColor),
+                        color = e.optString("color").takeIf { it.startsWith("#") }?.let(::parseColor),
+                        background = e.optString("background").takeIf { it.startsWith("#") }?.let(::parseColor),
+                        colorFromLeg = e.optString("color") == "leg",
+                        backgroundFromLeg = e.optString("background") == "leg",
                     )
-                },
+                }),
+                ofeed = o.optJSONObject("ofeed")?.let { m ->
+                    m.keySet().mapNotNull { k ->
+                        val v = m.optJSONObject(k) ?: return@mapNotNull null
+                        k.toIntOrNull()?.let { it to OFeedSource(v.optString("link"), v.optString("password")) }
+                    }.toMap()
+                } ?: emptyMap(),
                 infoFields = o.optJSONArray("infoFields")?.let { a ->
                     (0 until a.length()).mapNotNull { i -> InfoField.entries.firstOrNull { it.name == a.optString(i) } }.toSet()
                 } ?: d.infoFields,
                 sharedStartList = o.optBoolean("sharedStartList", false),
                 printed = o.optJSONArray("printed")?.let { a -> (0 until a.length()).map { a.optString(it) }.toSet() } ?: emptySet(),
             )
+        }
+
+        /** Ældre projekter havde ét foldehjørne-element pr. hjørne: nu ét element for alle fire. */
+        private fun foldsMerged(list: List<BibElement>): List<BibElement> {
+            val folds = list.filter { it.kind == ElementKind.FOLD }
+            if (folds.size <= 1) return list
+            val size = folds.maxOf { maxOf(it.width, it.height) }
+            val one = folds.first().copy(x = 0.0, y = 0.0, width = size, height = size, visible = folds.any { it.visible })
+            return list.filter { it.kind != ElementKind.FOLD } + one
         }
 
         fun hex(color: Int): String = "#%06X".format(color and 0xFFFFFF)

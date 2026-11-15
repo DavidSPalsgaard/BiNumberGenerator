@@ -51,14 +51,17 @@ loeb.json]` åbner vinduet med startlisten og projektet indlæst.
 - **Startliste:** indlæs IOF XML, Excel eller CSV, eller hent fra OFeed. Flerdagesløb: én liste pr.
   etape, eller "Én startliste til alle etaper" (en IOF XML-fil med `raceNumber` pr. start giver hver
   etape sin starttid). Løberne matches på tværs af etaper på startnummer, derefter SI-brik, derefter
-  navn og klub. Tabellen kan søges i og filtreres; klik på en løber for at rette. Fluebenet afgør, om
+  navn og klub. Hentes listen fra OFeed, huskes forbindelsen (også i projektfilen), og "Opdater"
+  henter ændringer. Tabellen kan søges i og filtreres; klik på en løber for at rette. Fluebenet afgør, om
   løberen kommer med; printerikonet udskriver kun den løber; "Ny" markerer dem der ikke er udskrevet.
 - **Opsætning:** løbstype, navn, antal etaper, sprog på startnummeret, navneformat, tidszone,
   afstand til start pr. startsted, etapernes overskrifter, farve pr. tur, arkformat og sortering.
 - **Design:** forhåndsvisning tegnet med samme kode og skrifter som udskriften. Alle elementer –
   nummer, navn, klub, hold, tur, klasse, starttid, bane, SI-nummer, stregkode, løbets navn,
-  løberens felt (vendt) og foldehjørner med sikkerhedsnål – kan slås til/fra, flyttes og ændres i
-  størrelse med musen, med tekst- og baggrundsfarve pr. element. Vilkårligt mange billeder.
+  løberens felt (vendt; ved flerdagesløb én kasse pr. etape) og foldehjørner med sikkerhedsnål (ét
+  element for alle fire hjørner) – kan slås til/fra, flyttes og ændres i størrelse med musen, med
+  tekst- og baggrundsfarve pr. element; ved stafet også turens farve. Kun 1. tur har starttid.
+  Vilkårligt mange billeder.
 - **Udskriv** sender direkte til en printer (styresystemets printerdialog); vælg alle, kun dem der
   ikke er udskrevet før (nytilkomne), eller én løber. **Eksportér PDF** gemmer det samme som PDF.
 - **Gem projekt** gemmer opsætningen, layoutet og hvad der er udskrevet som JSON (grafikstier
@@ -98,8 +101,10 @@ Udskrift: to A5 pr. A4-ark med skærelinje (`--sheet a4x2`, standard) eller ét 
   under teksten (men over stafettens farvede bånd).
 - `elements`: startnummerets elementer (`kind`, `x`, `y`, `width`, `height`, `visible`, `rotated`,
   `align`, evt. `color`/`background` som `#RRGGBB`). Udeladt = standardlayoutet for løbstypen.
-- `infoFields`, `sharedStartList`, `printed`: felter i løberens felt, én liste til alle etaper,
-  og startnumre der er udskrevet.
+- `infoFields`, `sharedStartList`, `printed`, `ofeed`: felter i løberens felt, én liste til alle
+  etaper, startnumre der er udskrevet, og OFeed-forbindelse pr. startliste (link og adgangskode –
+  gem ikke projektfilen offentligt).
+- Programmets ikon tegnes af `desktop/icons/lav_ikon.py` (Pillow).
 - `distances`: afstand til start pr. startsted; nøglen `""` gælder alle andre startsteder.
 - `language`: sprog på startnummeret – engelsk, dansk og 22 andre europæiske sprog
   (`layout/BibTexts.kt`). "Afstand til start", "Tur" og "Etape" er oversat uden gennemsyn af

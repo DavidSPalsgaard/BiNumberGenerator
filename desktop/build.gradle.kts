@@ -39,7 +39,10 @@ compose.desktop {
             description = "Startnumre til orienteringsløb"
             vendor = "BiNumreGenerator"
             modules("java.desktop", "java.prefs", "java.instrument", "jdk.unsupported", "java.xml", "java.naming", "java.net.http", "jdk.crypto.ec", "jdk.charsets", "jdk.localedata")
+            linux { iconFile.set(project.file("icons/icon-512.png")) }
+            macOS { iconFile.set(project.file("icons/icon.icns")) }
             windows {
+                iconFile.set(project.file("icons/icon.ico"))
                 menu = true
                 menuGroup = "BiNumreGenerator"
                 shortcut = true

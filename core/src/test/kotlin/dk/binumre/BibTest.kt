@@ -10,7 +10,9 @@ import dk.binumre.model.BibBuilder
 import dk.binumre.model.BibProject
 import dk.binumre.model.BibType
 import dk.binumre.model.Graphic
+import dk.binumre.model.BibElement
 import dk.binumre.model.ElementKind
+import dk.binumre.model.OFeedSource
 import dk.binumre.model.InfoField
 import dk.binumre.model.Stage
 import dk.binumre.startlist.StartEntry
@@ -94,6 +96,10 @@ class BibTest {
         val r = Recorder()
         BibLayout.draw(r, bibs[1], project, zone)
         assertTrue("Tur 2" in r.texts)
+        // Kun 1. tur har starttid (de næste starter ved skiftet)
+        val first = Recorder().also { BibLayout.draw(it, bibs[0], project, zone) }
+        assertTrue(first.rotated.toString(), "Starttid" in first.rotated)
+        assertTrue(r.rotated.toString(), "Starttid" !in r.rotated && "Fri start" !in r.rotated)
         assertTrue(0x00FF00 in r.rects)
     }
 
@@ -118,7 +124,8 @@ class BibTest {
 
         val r = Recorder()
         BibLayout.draw(r, carl, project, zone)
-        assertTrue(r.rotated.containsAll(listOf("Lørdag", "Fri start", "Etape 2", "09:30:30", "1,2 km")))
+        // Én kasse pr. etape: overskrift, starttid, klasse/bane, start/afstand
+        assertTrue(r.rotated.toString(), r.rotated.containsAll(listOf("Lørdag", "Fri start", "H21", "Etape 2", "09:30:30", "Start S1 · 1,2 km")))
         assertTrue(BibLayout.infoHeight(carl.stages.size) >= 24.0)
     }
 
@@ -162,6 +169,54 @@ class BibTest {
         assertEquals(custom, BibProject.fromJson(custom.toJson()))
         assertTrue(custom.customLayout)
         assertTrue(!base.customLayout)
+    }
+
+    @Test
+    fun foldehjørnerErÉtElementOgÆldreProjekterSamles() {
+        val folds = BibLayout.defaultElements(BibType.SINGLE, 1).filter { it.kind == ElementKind.FOLD }
+        assertEquals(1, folds.size)
+        assertEquals(14.0, folds[0].width, 0.0)
+        // Et ældre projekt med fire hjørne-elementer læses som ét
+        val old = BibProject().layout().filter { it.kind != ElementKind.FOLD } +
+            listOf(0.0, 199.0).map { x -> BibElement(ElementKind.FOLD, x, 0.0, 11.0, 11.0) }
+        val json = BibProject(elements = old).toJson()
+        val read = BibProject.fromJson(json).elements.filter { it.kind == ElementKind.FOLD }
+        assertEquals(listOf(BibElement(ElementKind.FOLD, 0.0, 0.0, 11.0, 11.0)), read)
+        // Ét element tegner alle fire hjørner
+        val bib = BibBuilder.build(BibProject(), listOf(load("startliste_eksempel.xml"))).bibs[0]
+        val r = Recorder().also { BibLayout.draw(it, bib, BibProject(), zone) }
+        assertEquals(8, r.polygons.size)
+    }
+
+    @Test
+    fun stafetnummerISturensFarve() {
+        val base = BibProject(type = BibType.RELAY, legColors = listOf("#112233", "#FFD400"))
+        val layout = base.layout().map {
+            if (it.kind == ElementKind.NUMBER) it.copy(colorFromLeg = true)
+            else if (it.kind == ElementKind.NAME) it.copy(backgroundFromLeg = true) else it
+        }
+        val project = base.copy(elements = layout)
+        assertEquals(project, BibProject.fromJson(project.toJson()))
+        val bibs = BibBuilder.build(project, listOf(load("stafet_eksempel.xml"))).bibs
+        class Colors : BibCanvas by Recorder() {
+            val text = mutableMapOf<String, Int>()
+            val rects = mutableListOf<Int>()
+            override fun text(text: String, x: Double, baseline: Double, font: BibFont, size: Double, align: Align, color: Int) { this.text[text] = color }
+            override fun rect(x: Double, y: Double, width: Double, height: Double, color: Int) { rects += color }
+        }
+        val leg1 = Colors().also { BibLayout.draw(it, bibs[0], project, zone) }
+        assertEquals(0x112233, leg1.text["12"])
+        // Navnet på turens farve: mørk baggrund → hvid tekst
+        assertEquals(0xFFFFFF, leg1.text["Anna Eksempel"])
+        val leg2 = Colors().also { BibLayout.draw(it, bibs[1], project, zone) }
+        assertEquals(0xFFD400, leg2.text["12"])
+        assertEquals(0x000000, leg2.text["Bo Prøve"])
+    }
+
+    @Test
+    fun ofeedForbindelseGemmes() {
+        val p = BibProject(ofeed = mapOf(0 to OFeedSource("https://stigning.se/ofeed?id=1&pwd=x"), 2 to OFeedSource("123", "hemmelig")))
+        assertEquals(p, BibProject.fromJson(p.toJson()))
     }
 
     @Test

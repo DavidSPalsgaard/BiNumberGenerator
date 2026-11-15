@@ -38,7 +38,8 @@ private val USAGE = """
       --class <klasse>         Kun denne klasse (kan gentages)
       --distance <start=tekst> Afstand til start, fx S1=400m eller blot 400m for alle
                                (flerdagesløb: 2:S1=600m gælder etape 2)
-      --stage <tekst>          Overskrift for en etape (gentages i rækkefølge)
+      --stage <tekst>          Overskrift for en etape (gentages i rækkefølge). Flerdagesløb med
+                               én fil og flere --stage: samme startliste til alle etaper
       --zone <tidszone>        Fx Europe/Copenhagen (standard: computerens)
 """.trimIndent()
 
@@ -110,10 +111,13 @@ private fun run(args: Array<String>) {
     if (lists.isEmpty()) throw IllegalArgumentException("Angiv en startliste (fil eller --ofeed)")
     if (lists.size > 1 && opt("type") == null && projectFile == null) project = project.copy(type = BibType.MULTIDAY)
 
+    val labels = opts["stage"].orEmpty()
     project = project.copy(
         eventName = opt("event") ?: project.eventName.ifEmpty { lists.first().event },
-        stages = stages(project, lists.size, opts["stage"].orEmpty(), opts["distance"].orEmpty()),
+        stages = stages(project, maxOf(lists.size, labels.size), labels, opts["distance"].orEmpty()),
     )
+    // Flerdagesløb med én fil og flere etaper: samme startliste til alle etaper
+    if (project.type == BibType.MULTIDAY && lists.size == 1 && project.stages.size > 1) project = project.copy(sharedStartList = true)
 
     val set = BibBuilder.build(project, lists, opts["class"].orEmpty().toSet())
     if (set.bibs.isEmpty()) fail("Ingen løbere med startnummer i startlisten (${set.withoutNumber} uden startnummer)")

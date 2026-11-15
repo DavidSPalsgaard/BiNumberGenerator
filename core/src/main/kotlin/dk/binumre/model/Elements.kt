@@ -11,7 +11,7 @@ enum class ElementKind {
     LEG,
     /** Feltet løberen selv læser (som standard vendt på hovedet): starttid, klasse, bane, start, afstand. */
     INFO,
-    /** Hjørne der skal foldes, før sikkerhedsnålen sættes i. */
+    /** Hjørnerne der skal foldes, før sikkerhedsnålen sættes i – ét element for alle fire hjørner (rammens størrelse). */
     FOLD,
 }
 
@@ -39,6 +39,10 @@ data class BibElement(
     val color: Int? = null,
     /** Udfyldt baggrund bag elementet (fx farvet felt bag nummeret); null = ingen. */
     val background: Int? = null,
+    /** Stafet: teksten får turens farve (i stedet for [color]). */
+    val colorFromLeg: Boolean = false,
+    /** Stafet: baggrunden får turens farve (i stedet for [background]); teksten bliver sort eller hvid. */
+    val backgroundFromLeg: Boolean = false,
 ) {
     val frame get() = Frame(x, y, width, height)
     fun moved(f: Frame) = copy(x = f.x, y = f.y, width = f.width, height = f.height)

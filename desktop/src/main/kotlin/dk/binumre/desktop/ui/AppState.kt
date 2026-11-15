@@ -17,6 +17,8 @@ import dk.binumre.model.BibSet
 import dk.binumre.model.BibStage
 import dk.binumre.model.BibType
 import dk.binumre.model.Graphic
+import dk.binumre.model.OFeedSource
+import dk.binumre.ofeed.mergeChanges
 import dk.binumre.model.Stage
 import dk.binumre.ofeed.OFeedClient
 import dk.binumre.ofeed.OFeedConnection
@@ -207,10 +209,45 @@ class AppState {
     }
 
     /** Henter startlisten fra OFeed. Kaldes fra en baggrundstråd; [addLists] med resultatet på UI-tråden. */
-    fun fetchOFeed(link: String, password: String): StartList {
-        val conn = OFeedConnection.fromLink(link) ?: OFeedConnection(OFeedConnection.DEFAULT_URL, link.trim(), password)
-        val r = OFeedClient.fetch(conn)
-        return StartList(r.event, "OFeed", System.currentTimeMillis(), r.entries)
+    fun fetchOFeed(source: OFeedSource): StartList {
+        val r = OFeedClient.fetch(connection(source))
+        return StartList(r.event, "OFeed", System.currentTimeMillis(), r.entries, cursor = OFeedClient.nextCursor(r.serverTime))
+    }
+
+    private fun connection(source: OFeedSource) =
+        OFeedConnection.fromLink(source.link) ?: OFeedConnection(OFeedConnection.DEFAULT_URL, source.link.trim(), source.password)
+
+    /**
+     * Henter ændringer fra OFeed til plads [slot] med den gemte forbindelse (baggrundstråd). Kun ændringer siden
+     * sidst hentes og flettes ind; fravalg i tabellen bevares. Resultatet sættes ind med [setList].
+     */
+    fun refreshOFeed(slot: Int): StartList {
+        val source = project.ofeed[slot] ?: throw IllegalStateException(strings["error.noOFeed"])
+        val old = lists.getOrNull(slot)
+        val r = OFeedClient.fetch(connection(source), old?.cursor)
+        val excluded = old?.entries.orEmpty().filter { it.excluded && it.id.isNotEmpty() }.map { it.id }.toSet()
+        val fresh = r.entries.map { if (it.id in excluded) it.copy(excluded = true) else it }
+        val entries = if (old?.cursor != null) mergeChanges(old.entries, fresh) else fresh
+        return StartList(r.event.ifEmpty { old?.event.orEmpty() }, "OFeed", System.currentTimeMillis(), entries, OFeedClient.nextCursor(r.serverTime), old?.date)
+            .also { lastChanges = r.entries.size }
+    }
+
+    /** Antal ændrede løbere ved seneste OFeed-opdatering. */
+    var lastChanges = 0
+        private set
+
+    fun setList(slot: Int, list: StartList) {
+        val next = MutableList(maxOf(lists.size, slot + 1)) { lists.getOrNull(it) }
+        next[slot] = list
+        lists = next
+        message = strings.format("msg.refreshed", lastChanges, list.entries.size)
+    }
+
+    /** Liste hentet fra OFeed: forbindelsen huskes i projektet, så listen kan opdateres senere. */
+    fun addOFeed(list: StartList, slot: Int, source: OFeedSource) {
+        addLists(listOf(list), slot)
+        val at = if (project.type == BibType.MULTIDAY && !project.sharedStartList) slot else 0
+        project = project.copy(ofeed = project.ofeed + (at to source))
     }
 
     fun addLists(loaded: List<StartList>, slot: Int = 0) {
@@ -223,6 +260,8 @@ class AppState {
         val next = MutableList(maxOf(lists.size, end)) { lists.getOrNull(it) }
         for (i in start until end) next[i] = used[i - start]
         lists = next
+        // En fil erstatter en OFeed-forbindelse på samme plads
+        if ((start until end).any { it in project.ofeed }) project = project.copy(ofeed = project.ofeed - (start until end).toSet())
         if (project.eventName.isEmpty()) project = project.copy(eventName = used.first().event)
         previewIndex = 0
         message = strings.format("msg.loaded", used.sumOf { it.entries.size }, used.joinToString(", ") { it.source }) +
@@ -231,6 +270,7 @@ class AppState {
 
     fun removeList(slot: Int) {
         if (slot in lists.indices) lists = lists.mapIndexed { i, l -> if (i == slot) null else l }
+        if (slot in project.ofeed) project = project.copy(ofeed = project.ofeed - slot)
     }
 
     fun updateEntries(slot: Int, change: (Int, StartEntry) -> StartEntry) {
@@ -248,7 +288,11 @@ class AppState {
     fun updateElement(index: Int, element: BibElement) {
         val list = project.layout().toMutableList()
         if (index !in list.indices) return
-        list[index] = element
+        // Foldehjørnerne er ét kvadrat, der tegnes i alle fire hjørner
+        list[index] = if (element.kind == dk.binumre.model.ElementKind.FOLD) {
+            val size = maxOf(element.width, element.height).coerceIn(FOLD_MIN, FOLD_MAX)
+            element.copy(x = 0.0, y = 0.0, width = size, height = size)
+        } else element
         project = project.copy(elements = list)
     }
 
@@ -289,5 +333,7 @@ class AppState {
 
     companion object {
         const val MAX_STAGES = 10
+        const val FOLD_MIN = 6.0
+        const val FOLD_MAX = 40.0
     }
 }

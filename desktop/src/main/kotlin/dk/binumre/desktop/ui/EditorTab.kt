@@ -208,13 +208,7 @@ private fun Panel(state: AppState, dialogs: FileDialogs) {
     }
 }
 
-private fun foldName(e: BibElement, s: Strings): String {
-    val left = e.x + e.width / 2 < BibLayout.WIDTH / 2
-    val top = e.y + e.height / 2 < BibLayout.HEIGHT / 2
-    return s["kind.FOLD"] + " (" + s["corner.${if (top) "top" else "bottom"}${if (left) "Left" else "Right"}"] + ")"
-}
-
-private fun elementName(e: BibElement, s: Strings) = if (e.kind == ElementKind.FOLD) foldName(e, s) else s["kind.${e.kind.name}"]
+private fun elementName(e: BibElement, s: Strings) = s["kind.${e.kind.name}"]
 
 @Composable
 private fun ElementsPanel(state: AppState) {
@@ -254,7 +248,9 @@ private fun ElementsPanel(state: AppState) {
 private fun ElementProperties(state: AppState, index: Int, e: BibElement) {
     val s = state.strings
     Text(elementName(e, s), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
-    FrameFields(s, e.frame) { state.updateElement(index, e.moved(it)) }
+    if (e.kind == ElementKind.FOLD) {
+        NumberField(s["editor.foldSize"], e.width, Modifier.fillMaxWidth()) { state.updateElement(index, e.copy(width = it, height = it)) }
+    } else FrameFields(s, e.frame) { state.updateElement(index, e.moved(it)) }
     if (textKind(e.kind) || e.kind == ElementKind.INFO) {
         if (textKind(e.kind)) {
             SingleChoiceSegmentedButtonRow(Modifier.fillMaxWidth()) {
@@ -286,6 +282,16 @@ private fun ElementProperties(state: AppState, index: Int, e: BibElement) {
                     state.updateElement(index, e.copy(background = it?.let(BibProject::parseColor)))
                 }
             }
+        }
+    }
+    if (state.project.type == BibType.RELAY && e.kind !in setOf(ElementKind.FOLD, ElementKind.LEG_BAND, ElementKind.LEG_STRIPE, ElementKind.INFO)) {
+        Row(Modifier.clickable { state.updateElement(index, e.copy(colorFromLeg = !e.colorFromLeg)) }, verticalAlignment = Alignment.CenterVertically) {
+            Checkbox(e.colorFromLeg, { state.updateElement(index, e.copy(colorFromLeg = it)) })
+            Text(s["editor.textLeg"])
+        }
+        Row(Modifier.clickable { state.updateElement(index, e.copy(backgroundFromLeg = !e.backgroundFromLeg)) }, verticalAlignment = Alignment.CenterVertically) {
+            Checkbox(e.backgroundFromLeg, { state.updateElement(index, e.copy(backgroundFromLeg = it)) })
+            Text(s["editor.backgroundLeg"])
         }
     }
     if (e.kind == ElementKind.INFO) {

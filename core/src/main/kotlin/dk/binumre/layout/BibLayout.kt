@@ -36,10 +36,12 @@ object BibLayout {
     private const val EM = 1.17
     private const val LEG_BAND = 16.0
     private const val ROW = 7.5
-    const val FOLD_SIZE = 11.0
+    const val FOLD_SIZE = 14.0
+    /** Flerdagesløb: højden af løberens felt med én kasse pr. etape. */
+    private const val MULTI_INFO = 30.0
 
     /** Højden af løberens felt: fast for ét løb, vokser med antal etaper. */
-    fun infoHeight(stages: Int): Double = if (stages > 1) max(26.0, 9.5 + ROW * stages) else 26.0
+    fun infoHeight(stages: Int): Double = if (stages > 1) MULTI_INFO else 26.0
 
     /** Standardplaceringen af elementerne for en skabelon. */
     fun defaultElements(type: BibType, stages: Int): List<BibElement> {
@@ -71,9 +73,6 @@ object BibLayout {
             e(ElementKind.BARCODE, WIDTH - MARGIN - 80.0, barcodeTop, 80.0, 12.0),
             e(ElementKind.INFO, 0.0, split, WIDTH, infoH, rotated = true),
             e(ElementKind.FOLD, 0.0, 0.0, FOLD_SIZE, FOLD_SIZE),
-            e(ElementKind.FOLD, WIDTH - FOLD_SIZE, 0.0, FOLD_SIZE, FOLD_SIZE),
-            e(ElementKind.FOLD, 0.0, HEIGHT - FOLD_SIZE, FOLD_SIZE, FOLD_SIZE),
-            e(ElementKind.FOLD, WIDTH - FOLD_SIZE, HEIGHT - FOLD_SIZE, FOLD_SIZE, FOLD_SIZE),
         )
     }
 
@@ -82,27 +81,39 @@ object BibLayout {
         val elements = project.layout().filter { it.visible }
         val relay = project.type == BibType.RELAY && bib.leg.isNotEmpty()
         val legColor = if (relay) project.legColor(bib.leg) else 0
+        // Stafet: kun 1. tur har en starttid – de næste starter, når holdkammeraten kommer i mål
+        val showStart = !relay || firstLeg(bib.leg)
 
         // Rækkefølge: farvede flader, grafik, foldehjørner og til sidst tekst – grafik må ligge i turens bånd
         for (e in elements) {
             if (relay && (e.kind == ElementKind.LEG_BAND || e.kind == ElementKind.LEG_STRIPE)) c.rect(e.x, e.y, e.width, e.height, legColor)
         }
-        for (e in elements) e.background?.let { c.rect(e.x, e.y, e.width, e.height, it) }
+        fun background(e: BibElement) = if (e.backgroundFromLeg && relay) legColor else e.background
+        for (e in elements) background(e)?.let { c.rect(e.x, e.y, e.width, e.height, it) }
         for (g in project.graphics) c.image(g.file, g.x, g.y, g.width, g.height)
-        for (e in elements) if (e.kind == ElementKind.FOLD) fold(c, e.frame)
+        for (e in elements) if (e.kind == ElementKind.FOLD) {
+            val s = min(e.width, e.height)
+            for ((x, y) in listOf(0.0 to 0.0, WIDTH - s to 0.0, 0.0 to HEIGHT - s, WIDTH - s to HEIGHT - s)) fold(c, Frame(x, y, s, s))
+        }
 
         for (e in elements) {
             // Med farvet baggrund får teksten lidt luft til kanten
-            val f = if (e.background != null && e.kind != ElementKind.INFO) e.frame.inset(e.width * 0.03, e.height * 0.1) else e.frame
+            val bg = background(e)
+            val f = if (bg != null && e.kind != ElementKind.INFO) e.frame.inset(e.width * 0.03, e.height * 0.1) else e.frame
             if (e.kind == ElementKind.INFO) {
                 c.line(f.x, f.y, f.right, f.y, 0.3)
             }
-            val ink = e.color ?: 0x000000
+            val ink = when {
+                e.colorFromLeg && relay -> legColor
+                e.color != null -> e.color
+                bg != null -> contrast(bg)
+                else -> 0x000000
+            }
             val block: () -> Unit = {
                 when (e.kind) {
                     ElementKind.LEG_BAND -> if (!relay) Unit else textIn(c, "${texts.leg} ${bib.leg}", f.inset(0.0, f.height * 0.18), BibFont.BOLD, e.align, e.color ?: contrast(legColor), caps = true)
                     ElementKind.LEG_STRIPE, ElementKind.FOLD -> Unit
-                    ElementKind.EVENT_NAME -> textIn(c, project.eventName, f, BibFont.REGULAR, e.align, e.color ?: GREY)
+                    ElementKind.EVENT_NAME -> textIn(c, project.eventName, f, BibFont.REGULAR, e.align, if (ink == 0x000000 && e.color == null) GREY else ink)
                     ElementKind.NUMBER -> textIn(c, bib.number, f, BibFont.BOLD, e.align, ink, caps = true)
                     ElementKind.NAME -> textIn(c, bib.displayName(project.nameFormat), f, BibFont.BOLD, e.align, ink)
                     ElementKind.CLUB -> textIn(c, bib.club, f, BibFont.REGULAR, e.align, ink)
@@ -110,10 +121,10 @@ object BibLayout {
                     ElementKind.LEG -> textIn(c, bib.leg, f, BibFont.BOLD, e.align, ink, caps = true)
                     ElementKind.CARD -> bib.card?.let { textIn(c, "SI $it", f, BibFont.REGULAR, e.align, ink) }
                     ElementKind.CLASS -> textIn(c, bib.cls, f, BibFont.BOLD, e.align, ink)
-                    ElementKind.START_TIME -> bib.stages.firstOrNull { it != null }?.let { textIn(c, time(it.start, zone, texts), f, BibFont.BOLD, e.align, ink) }
+                    ElementKind.START_TIME -> bib.stages.firstOrNull { it != null }?.takeIf { showStart }?.let { textIn(c, time(it.start, zone, texts), f, BibFont.BOLD, e.align, ink) }
                     ElementKind.COURSE -> bib.stages.firstOrNull { it != null }?.let { textIn(c, course(it, project.language), f, BibFont.REGULAR, e.align, ink) }
                     ElementKind.BARCODE -> barcode(c, barcodeText(bib), f, e.align, ink)
-                    ElementKind.INFO -> info(c, bib, project, texts, zone, f)
+                    ElementKind.INFO -> info(c, bib, project, texts, zone, f, showStart)
                 }
                 Unit
             }
@@ -145,8 +156,8 @@ object BibLayout {
     ).joinToString(" · ")
 
     /** Løberens felt – tegnes retvendt her; [BibElement.rotated] vender det. Mål skaleres med rammen. */
-    private fun info(c: BibCanvas, bib: Bib, project: BibProject, t: BibTexts, zone: ZoneId, f: Frame) {
-        val fields = InfoField.entries.filter { it in project.infoFields }
+    private fun info(c: BibCanvas, bib: Bib, project: BibProject, t: BibTexts, zone: ZoneId, f: Frame, showStart: Boolean = true) {
+        val fields = InfoField.entries.filter { it in project.infoFields && (showStart || it != InfoField.START_TIME) }
         val sx = f.width / WIDTH
         val k = { sy: Double -> min(sx, sy) }
         val left = f.x + MARGIN * sx
@@ -176,37 +187,44 @@ object BibLayout {
             return
         }
 
-        val sy = f.height / infoHeight(bib.stages.size)
-        val base = mapOf(
-            InfoField.START_TIME to (t.startTime to 34.0), InfoField.CLASS to (t.cls to 30.0), InfoField.COURSE to (t.course to 40.0),
-            InfoField.START_NAME to (t.start to 26.0), InfoField.DISTANCE to (t.distance to 34.0),
-        )
-        val widths0 = listOf(30.0) + fields.map { base.getValue(it).second }
-        val widths = widths0.map { inner * it / widths0.sum() }
-        val labels = listOf("") + fields.map { base.getValue(it).first }
-        var x = left
-        for ((i, w) in widths.withIndex()) {
-            fit(c, labels[i], x, f.y + 6.0 * sy, BibFont.REGULAR, 3.4 * k(sy), w - 2.5 * sx, Align.LEFT, GREY)
-            x += w
-        }
+        // Flerdagesløb: én kasse pr. etape side om side (som på 5 Days) – etape, starttid, klasse/bane, start/afstand
+        val n = bib.stages.size
+        val sy = f.height / MULTI_INFO
+        val gap = 2.5 * sx
+        // Lidt længere fra kanten end resten, så foldehjørnerne ikke rammer kasserne
+        val side = 13.0 * sx
+        val boxW = (f.width - 2 * side - gap * (n - 1)) / n
+        val top = f.y + 2.5 * sy
+        val boxH = f.height - 5.0 * sy
+        val pad = 1.8 * k(sy)
         for ((i, s) in bib.stages.withIndex()) {
-            val rowTop = f.y + (7.5 + ROW * i) * sy
-            c.line(left, rowTop, left + inner, rowTop, 0.15, GREY)
+            val x = f.x + side + i * (boxW + gap)
+            // Tynd ramme om kassen
+            c.line(x, top, x + boxW, top, 0.2, GREY)
+            c.line(x, top + boxH, x + boxW, top + boxH, 0.2, GREY)
+            c.line(x, top, x, top + boxH, 0.2, GREY)
+            c.line(x + boxW, top, x + boxW, top + boxH, 0.2, GREY)
             val stage = project.stage(i)
-            val value = mapOf(
-                InfoField.START_TIME to if (s == null) "–" else time(s.start, zone, t),
-                InfoField.CLASS to s?.cls.orEmpty(),
-                InfoField.COURSE to s?.let { course(it, project.language) }.orEmpty(),
-                InfoField.START_NAME to s?.startName.orEmpty(),
-                InfoField.DISTANCE to s?.let { stage.distance(it.startName) }.orEmpty(),
-            )
-            val values = listOf(stage.label.ifEmpty { "${t.stage} ${i + 1}" }) + fields.map { value.getValue(it) }
-            x = left
-            for ((j, w) in widths.withIndex()) {
-                val bold = j > 0 && fields[j - 1] == InfoField.START_TIME
-                fit(c, values[j], x, rowTop + 5.6 * sy, if (bold) BibFont.BOLD else BibFont.REGULAR, 5.4 * k(sy), w - 2.5 * sx, Align.LEFT)
-                x += w
+            val w = boxW - 2 * pad
+            val tx = x + pad
+            fun line(text: String, baseline: Double, font: BibFont, size: Double, color: Int = 0x000000) =
+                fit(c, text, tx, top + baseline * sy, font, size * k(sy), w, Align.LEFT, color)
+            line(stage.label.ifEmpty { "${t.stage} ${i + 1}" }, 5.0, BibFont.BOLD, 3.6, GREY)
+            if (s == null) {
+                line("–", 13.0, BibFont.BOLD, 7.0)
+                continue
             }
+            if (InfoField.START_TIME in fields) line(time(s.start, zone, t), 12.5, BibFont.BOLD, 7.0)
+            val second = listOfNotNull(
+                s.cls.takeIf { InfoField.CLASS in fields && it.isNotEmpty() },
+                course(s, project.language).takeIf { InfoField.COURSE in fields && it.isNotEmpty() },
+            ).joinToString(" · ")
+            line(second, 17.8, BibFont.REGULAR, 3.6)
+            val third = listOfNotNull(
+                s.startName.takeIf { InfoField.START_NAME in fields && it.isNotEmpty() }?.let { "${t.start} $it" },
+                stage.distance(s.startName).takeIf { InfoField.DISTANCE in fields && it.isNotEmpty() },
+            ).joinToString(" · ")
+            line(third, 22.6, BibFont.REGULAR, 3.6)
         }
     }
 
@@ -288,6 +306,9 @@ object BibLayout {
             textIn(c, text, box, BibFont.REGULAR, Align.CENTER, ink)
         }
     }
+
+    /** Første tur ("1", "01", "1A" …) – eller ingen tur. */
+    fun firstLeg(leg: String): Boolean = leg.filter { it.isDigit() }.toIntOrNull()?.let { it <= 1 } ?: true
 
     fun zoneOf(project: BibProject): ZoneId =
         project.zone.ifEmpty { null }?.let { runCatching { ZoneId.of(it) }.getOrNull() } ?: ZoneId.systemDefault()

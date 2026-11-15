@@ -27,6 +27,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Badge
@@ -79,6 +80,16 @@ fun StartListTab(state: AppState, dialogs: FileDialogs) {
     var onlyNew by remember { mutableStateOf(false) }
     var editing by remember { mutableStateOf<Int?>(null) }
     var ofeedSlot by remember { mutableStateOf<Int?>(null) }
+    var refreshing by remember { mutableStateOf<Int?>(null) }
+    val scope = rememberCoroutineScope()
+    fun refresh(at: Int) {
+        refreshing = at
+        scope.launch {
+            val result = withContext(Dispatchers.IO) { runCatching { state.refreshOFeed(at) } }
+            refreshing = null
+            result.onSuccess { state.setList(at, it) }.onFailure { state.error = it.message ?: it.toString() }
+        }
+    }
 
     val slots = state.slotCount
     val slot = current.coerceIn(0, slots - 1)
@@ -102,6 +113,8 @@ fun StartListTab(state: AppState, dialogs: FileDialogs) {
                     onSelect = { current = i },
                     onLoad = { load(i) },
                     onOFeed = { ofeedSlot = i },
+                    onRefresh = if (state.project.ofeed.containsKey(i)) ({ refresh(i) }) else null,
+                    refreshing = refreshing == i,
                     onRemove = { state.removeList(i) },
                     s = s,
                 )
@@ -206,7 +219,7 @@ fun StartListTab(state: AppState, dialogs: FileDialogs) {
 @Composable
 private fun SlotCard(
     title: String, file: String?, selected: Boolean, emptyText: String,
-    onSelect: () -> Unit, onLoad: () -> Unit, onOFeed: () -> Unit, onRemove: () -> Unit, s: Strings,
+    onSelect: () -> Unit, onLoad: () -> Unit, onOFeed: () -> Unit, onRefresh: (() -> Unit)?, refreshing: Boolean, onRemove: () -> Unit, s: Strings,
 ) {
     val shape = RoundedCornerShape(12.dp)
     Column(
@@ -231,6 +244,12 @@ private fun SlotCard(
         Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
             FilledTonalButton(onClick = onLoad, contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 12.dp)) {
                 Icon(AppIcons.Upload, null, Modifier.size(16.dp)); Spacer(Modifier.width(6.dp)); Text(s["list.file"])
+            }
+            if (onRefresh != null) {
+                FilledTonalButton(onClick = onRefresh, enabled = !refreshing, contentPadding = androidx.compose.foundation.layout.PaddingValues(horizontal = 12.dp)) {
+                    Icon(Icons.Default.Refresh, null, Modifier.size(16.dp)); Spacer(Modifier.width(6.dp))
+                    Text(s[if (refreshing) "ofeed.fetching" else "list.refresh"])
+                }
             }
             TextButton(onClick = onOFeed) {
                 Icon(AppIcons.Cloud, null, Modifier.size(16.dp)); Spacer(Modifier.width(6.dp)); Text("OFeed")
@@ -361,8 +380,9 @@ private fun EditDialog(state: AppState, entry: StartEntry, date: java.time.Local
 private fun OFeedDialog(state: AppState, slot: Int, onClose: () -> Unit) {
     val s = state.strings
     val scope = rememberCoroutineScope()
-    var link by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
+    val saved = state.project.ofeed[slot]
+    var link by remember { mutableStateOf(saved?.link.orEmpty()) }
+    var password by remember { mutableStateOf(saved?.password.orEmpty()) }
     var busy by remember { mutableStateOf(false) }
     AlertDialog(
         onDismissRequest = { if (!busy) onClose() },
@@ -377,9 +397,10 @@ private fun OFeedDialog(state: AppState, slot: Int, onClose: () -> Unit) {
             Button(enabled = !busy && link.isNotBlank(), onClick = {
                 busy = true
                 scope.launch {
-                    val result = withContext(Dispatchers.IO) { runCatching { state.fetchOFeed(link, password) } }
+                    val source = dk.binumre.model.OFeedSource(link.trim(), password)
+                    val result = withContext(Dispatchers.IO) { runCatching { state.fetchOFeed(source) } }
                     busy = false
-                    result.onSuccess { state.addLists(listOf(it), slot); onClose() }
+                    result.onSuccess { state.addOFeed(it, slot, source); onClose() }
                         .onFailure { state.error = it.message ?: it.toString() }
                 }
             }) { Text(s[if (busy) "ofeed.fetching" else "ofeed.fetch"]) }

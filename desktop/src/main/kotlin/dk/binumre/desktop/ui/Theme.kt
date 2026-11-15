@@ -75,13 +75,21 @@ private val colors = lightColorScheme(
     errorContainer = Color(0xFFFDE3E1),
 )
 
+// Lidt mindre end Materials standard, så der er plads til tabeller og paneler på en bærbar
 private val base = Typography()
+private fun TextStyle.sized(size: Int, line: Int, weight: FontWeight? = fontWeight) = copy(fontSize = size.sp, lineHeight = line.sp, fontWeight = weight)
 private val typography = base.copy(
-    headlineLarge = base.headlineLarge.copy(fontWeight = FontWeight.Bold),
-    headlineSmall = base.headlineSmall.copy(fontWeight = FontWeight.SemiBold),
-    titleLarge = base.titleLarge.copy(fontWeight = FontWeight.SemiBold),
-    titleMedium = base.titleMedium.copy(fontWeight = FontWeight.SemiBold),
-    labelLarge = base.labelLarge.copy(fontWeight = FontWeight.SemiBold),
+    headlineLarge = base.headlineLarge.sized(28, 34, FontWeight.Bold),
+    headlineSmall = base.headlineSmall.sized(20, 26, FontWeight.SemiBold),
+    titleLarge = base.titleLarge.sized(18, 24, FontWeight.SemiBold),
+    titleMedium = base.titleMedium.sized(14, 20, FontWeight.SemiBold),
+    titleSmall = base.titleSmall.sized(13, 18),
+    bodyLarge = base.bodyLarge.sized(14, 20),
+    bodyMedium = base.bodyMedium.sized(13, 18),
+    bodySmall = base.bodySmall.sized(11, 15),
+    labelLarge = base.labelLarge.sized(13, 18, FontWeight.SemiBold),
+    labelMedium = base.labelMedium.sized(11, 15),
+    labelSmall = base.labelSmall.sized(10, 14),
 )
 
 @Composable

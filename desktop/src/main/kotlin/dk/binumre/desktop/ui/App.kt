@@ -70,6 +70,7 @@ fun runGui(args: List<String>) {
             if (state.dirty && name != null) " (${state.strings["status.unsaved"]})" else ""
         Window(
             onCloseRequest = { if (state.dirty) confirm = ::exitApplication else exitApplication() },
+            icon = remember { appIcon() },
             state = rememberWindowState(size = DpSize(1320.dp, 880.dp)),
             title = title,
         ) {
@@ -100,6 +101,13 @@ fun runGui(args: List<String>) {
         }
     }
 }
+
+/** Programmets ikon (samme som .exe-filens). */
+private fun appIcon(): androidx.compose.ui.graphics.painter.Painter? = runCatching {
+    AppState::class.java.getResourceAsStream("/icon.png")!!.use {
+        androidx.compose.ui.graphics.painter.BitmapPainter(androidx.compose.ui.res.loadImageBitmap(it))
+    }
+}.getOrNull()
 
 /** Gemmer projektet (spørger om filnavn første gang eller ved [saveAs]). False når brugeren fortryder eller det fejler. */
 fun saveProject(state: AppState, dialogs: FileDialogs, saveAs: Boolean): Boolean {
