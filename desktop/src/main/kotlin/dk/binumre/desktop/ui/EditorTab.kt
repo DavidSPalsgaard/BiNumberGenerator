@@ -26,6 +26,11 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.foundation.relocation.BringIntoViewRequester
+import androidx.compose.foundation.relocation.bringIntoViewRequester
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
@@ -234,30 +239,49 @@ private fun Panel(state: AppState, dialogs: FileDialogs) {
 
 private fun elementName(e: BibElement, s: Strings) = s["kind.${e.kind.name}"]
 
+@OptIn(androidx.compose.foundation.ExperimentalFoundationApi::class)
 @Composable
 private fun ElementsPanel(state: AppState) {
     val s = state.strings
     val elements = state.elements
     Text(s["editor.hint"], style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-    // Det valgte elements egenskaber øverst, så de ses uden at rulle
-    val sel = state.selection
-    if (sel != null && !sel.graphic) state.elements.getOrNull(sel.index)?.let { e -> ElementProperties(state, sel.index, e); HorizontalDivider() }
     CompositionLocalProvider(LocalMinimumInteractiveComponentSize provides Dp.Unspecified) {
         Column(Modifier.fillMaxWidth().border(1.dp, MaterialTheme.colorScheme.outlineVariant, RoundedCornerShape(10.dp)).padding(vertical = 4.dp)) {
             elements.forEachIndexed { i, e ->
                 if (!relevant(e.kind, state.project.type)) return@forEachIndexed
-                val selected = state.selection == Selection(false, i)
+                val selected = state.selection == Selection(false, i) && e.visible
                 Row(
                     Modifier.fillMaxWidth().background(if (selected) MaterialTheme.colorScheme.primaryContainer else Color.Transparent)
-                        .clickable { if (e.visible) state.selection = Selection(false, i) }.padding(horizontal = 8.dp, vertical = 4.dp),
+                        // Klik på navnet vælger elementet og folder dets indstillinger ud (klik igen lukker dem)
+                        .clickable(enabled = e.visible) { state.selection = if (selected) null else Selection(false, i) }
+                        .padding(horizontal = 8.dp, vertical = 4.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
+                    // Fluebenet slår kun elementet til og fra – det vælges ikke, så listen står stille
                     Checkbox(e.visible, { v ->
                         state.updateElement(i, e.copy(visible = v))
-                        state.selection = if (v) Selection(false, i) else null
+                        if (!v && state.selection == Selection(false, i)) state.selection = null
                     })
                     Spacer(Modifier.width(8.dp))
-                    Text(elementName(e, s), fontWeight = if (selected) FontWeight.SemiBold else null)
+                    Text(
+                        elementName(e, s), Modifier.weight(1f), fontWeight = if (selected) FontWeight.SemiBold else null,
+                        color = if (e.visible) MaterialTheme.colorScheme.onSurface else MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    if (e.visible) Icon(
+                        if (selected) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown, null,
+                        Modifier.size(18.dp), tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                if (selected) {
+                    // Indstillingerne foldes ud lige under elementet – og rulles frem, hvis det blev valgt i forhåndsvisningen
+                    val bring = remember { BringIntoViewRequester() }
+                    LaunchedEffect(i) { bring.bringIntoView() }
+                    Column(
+                        Modifier.fillMaxWidth().bringIntoViewRequester(bring).background(MaterialTheme.colorScheme.surfaceContainerLow)
+                            .padding(start = 16.dp, end = 10.dp, top = 8.dp, bottom = 12.dp),
+                        verticalArrangement = Arrangement.spacedBy(10.dp),
+                    ) { ElementProperties(state, i, e) }
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
                 }
             }
         }
@@ -271,7 +295,6 @@ private fun ElementsPanel(state: AppState) {
 @Composable
 private fun ElementProperties(state: AppState, index: Int, e: BibElement) {
     val s = state.strings
-    Text(elementName(e, s), style = MaterialTheme.typography.titleMedium, color = MaterialTheme.colorScheme.primary)
     if (e.kind == ElementKind.FOLD) {
         NumberField(s["editor.foldSize"], e.width, Modifier.fillMaxWidth()) { state.updateElement(index, e.copy(width = it, height = it)) }
     } else {

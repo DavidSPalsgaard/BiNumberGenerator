@@ -21,6 +21,8 @@ Nyt i runde 5
    vinklen i grader. Ved 90° og 270° følger teksten feltets lange side – fx et smalt, højt felt
    med løbets navn lodret langs kanten (som på 10MILA 2026).
  - Målfelterne (X, Y, bredde, højde, vinkel) retter ikke længere tallet, mens man skriver.
+ - Elementlisten: fluebenet slår kun elementet til/fra (uden at vælge det). Klik på navnet for at
+   folde indstillingerne ud lige under elementet – listen hopper ikke længere.
 
  Test: Design → klik på løbets navn → skriv X 2, Y 20, Bredde 9, Højde 100 → "⟳ 90°" → giv det
  en grøn baggrund. Klik på nummeret og træk i den runde knap for at dreje det. Eksportér PDF og
