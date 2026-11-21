@@ -31,6 +31,10 @@ automatisk ved hver ændring på `main` (`.github/workflows/build.yml`). Pak den
   trin-for-trin afprøvning. Filerne ligger i `testpakke/` (XML-filerne i `core/src/test/resources/`),
   og en test sikrer, at de passer til vejledningen.
 
+**Udgivne versioner** (fx `v1.0.0`) ligger også under Releases med `BiNumreGenerator-<version>.msi` og
+`BiNumreGenerator-<version>-windows.zip`. En ny version udgives ved at sætte `appVersion` i
+`desktop/build.gradle.kts` og skubbe et mærke med samme nummer: `git tag v1.0.0 && git push origin v1.0.0`.
+
 Windows viser måske "Windows beskyttede din pc", fordi programmet ikke er kodesigneret endnu:
 klik "Flere oplysninger" → "Kør alligevel".
 

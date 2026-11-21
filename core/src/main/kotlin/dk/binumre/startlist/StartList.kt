@@ -21,7 +21,6 @@ data class StartEntry(
     val card: Long? = null,
     val course: String = "",
     val startName: String = "",
-    val team: String = "",
     /** Stafet: holdets navn og turens nummer hver for sig (tom for individuelle løb). */
     val teamName: String = "",
     val leg: String = "",
@@ -34,29 +33,6 @@ data class StartEntry(
     /** Flerdagesløb i én fil (IOF XML "raceNumber"): hvilken etape linjen gælder; null = alle. */
     val race: Int? = null,
 ) {
-    /** Løberen er registreret som startet (status fra OFeed, fx sat af O Checklist ved starten). */
-    val started: Boolean get() = status.isNotEmpty() && status !in NOT_STARTED
-
-    /** Check-in-tidspunkt: [minutes] minutter før starttiden (null ved fri start). */
-    fun checkIn(minutes: Int): Long? = start?.minus(minutes * 60_000L)
-
-    /** Forsendt: ikke startet, og check-in-tiden er overskredet (inden for 12 timer). */
-    fun late(checkInMinutes: Int, now: Long): Boolean {
-        val c = checkIn(checkInMinutes) ?: return false
-        return !started && now > c && now - c < 12 * 3600_000L
-    }
-
-    /** Samme klokkeslæt på [date] (løbsdato angivet i opsætningen). Uændret når [date] er null. */
-    fun onDate(date: LocalDate?, zone: ZoneId = ZoneId.systemDefault()): StartEntry {
-        if (date == null || start == null) return this
-        val time = Instant.ofEpochMilli(start).atZone(zone).toLocalTime()
-        return copy(start = time.atDate(date).atZone(zone).toInstant().toEpochMilli())
-    }
-
-    companion object {
-        private val NOT_STARTED = setOf("Inactive", "DidNotStart", "DidNotEnter", "NotCompeting", "Cancelled")
-    }
-
     fun displayName(format: NameFormat): String =
         if (given.isEmpty() && family.isEmpty()) name
         else when (format) {
@@ -80,11 +56,6 @@ data class StartList(
     val eventDate: LocalDate? by lazy {
         date?.let { runCatching { LocalDate.parse(it.take(10)) }.getOrNull() }
             ?: entries.mapNotNull { it.start }.minOrNull()?.let { Instant.ofEpochMilli(it).atZone(ZoneId.systemDefault()).toLocalDate() }
-    }
-
-    /** Opslag på SI-nummer. Et kort kan stå flere gange (fx stafet eller lejebrik). */
-    val byCard: Map<Long, List<StartEntry>> by lazy {
-        entries.filter { it.card != null }.groupBy { it.card!! }
     }
 
     val classes: List<String> by lazy {

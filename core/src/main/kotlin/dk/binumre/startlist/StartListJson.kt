@@ -28,7 +28,7 @@ object StartListJson {
     private fun entry(e: StartEntry): JSONObject = JSONObject().apply {
         fun s(k: String, v: String) { if (v.isNotEmpty()) put(k, v) }
         s("id", e.id); s("given", e.given); s("family", e.family); s("name", e.name); s("club", e.club)
-        s("class", e.cls); s("bib", e.bib); s("course", e.course); s("startName", e.startName); s("team", e.team)
+        s("class", e.cls); s("bib", e.bib); s("course", e.course); s("startName", e.startName)
         s("teamName", e.teamName); s("leg", e.leg); s("status", e.status)
         e.start?.let { put("start", it) }
         e.card?.let { put("card", it) }
@@ -42,8 +42,10 @@ object StartListJson {
         club = o.optString("club"), cls = o.optString("class"), bib = o.optString("bib"),
         start = if (o.has("start")) o.optLong("start") else null,
         card = if (o.has("card")) o.optLong("card") else null,
-        course = o.optString("course"), startName = o.optString("startName"), team = o.optString("team"),
-        teamName = o.optString("teamName"), leg = o.optString("leg"),
+        course = o.optString("course"), startName = o.optString("startName"),
+        // Ældre projektfiler har kun "team" (CSV-kolonnen eller "Hold · tur")
+        teamName = o.optString("teamName").ifEmpty { o.optString("team").substringBefore(" · ").trim() },
+        leg = o.optString("leg"),
         courseLength = if (o.has("courseLength")) o.optInt("courseLength") else null,
         status = o.optString("status"), excluded = o.optBoolean("excluded", false),
         race = if (o.has("race")) o.optInt("race") else null,

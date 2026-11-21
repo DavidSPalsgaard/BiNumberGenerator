@@ -74,7 +74,6 @@ object OFeedParser {
                 team.optJSONArray("competitors").objects().forEach { c ->
                     val leg = c.str("leg")
                     out += entry(c, className, startName).copy(
-                        team = if (leg.isEmpty()) teamName else "$teamName · $leg",
                         teamName = teamName,
                         leg = leg,
                         // Holdets startnummer når løberen ikke har sit eget

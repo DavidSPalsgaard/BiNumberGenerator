@@ -75,7 +75,8 @@ class OFeedTest {
         """.trimIndent()
         val r = OFeedParser.parse(json)
         assertEquals(2, r.entries.size)
-        assertEquals("OK Ø 1 · 2", r.entries[1].team)
+        assertEquals("OK Ø 1", r.entries[1].teamName)
+        assertEquals("2", r.entries[1].leg)
         assertEquals("12.2", r.entries[1].bib)
         assertEquals(2002L, r.entries[1].card)
     }
@@ -88,43 +89,6 @@ class OFeedTest {
         assertEquals(3, merged.size)
         assertEquals(999L, merged["2"]!!.card)
         assertEquals(100L, merged["1"]!!.card)
-    }
-
-    @Test
-    fun startedAndCheckIn() {
-        val json = """
-            {"results":{"data":{"name":"X","classes":[{"name":"H21","competitors":[
-              {"id":1,"lastname":"A","firstname":"Anna","status":"Active","startTime":"2026-10-26T10:00:00Z"},
-              {"id":2,"lastname":"B","firstname":"Bo","status":"Inactive","startTime":"2026-10-26T10:00:00Z"},
-              {"id":3,"lastname":"C","firstname":"Cy","status":"DidNotStart","startTime":null}]}]}}}
-        """.trimIndent()
-        val (a, b, c) = OFeedParser.parse(json).entries
-        assertEquals(true, a.started)
-        assertEquals(false, b.started)
-        assertEquals(false, c.started)
-        // Check-in 4 minutter før start; fri start har ingen check-in
-        assertEquals(Instant.parse("2026-10-26T09:56:00Z").toEpochMilli(), b.checkIn(4))
-        assertNull(c.checkIn(4))
-        // Fil/URL-lister har ingen status
-        assertEquals(false, StartEntry(given = "X").started)
-    }
-
-    @Test
-    fun eventDateOverrideAndLate() {
-        val cph = java.time.ZoneId.of("Europe/Copenhagen")
-        // Start 11:41 dansk tid den 29. marts 
-        val e = StartEntry(start = java.time.ZonedDateTime.of(2026, 3, 29, 11, 41, 0, 0, cph).toInstant().toEpochMilli())
-        val moved = e.onDate(java.time.LocalDate.of(2026, 10, 26), cph)
-        assertEquals(java.time.ZonedDateTime.of(2026, 10, 26, 11, 41, 0, 0, cph).toInstant().toEpochMilli(), moved.start)
-        assertEquals(e, e.onDate(null, cph))
-
-        val start = moved.start!!
-        // Check-in 11:37: kl. 11:36 er ikke forsendt, kl. 11:38 er forsendt – men ikke hvis startet
-        assertEquals(false, moved.late(4, start - 5 * 60_000))
-        assertEquals(true, moved.late(4, start - 3 * 60_000))
-        assertEquals(false, moved.copy(status = "Active").late(4, start - 3 * 60_000))
-        // Et løb for længe siden er ikke "forsendt"
-        assertEquals(false, moved.late(4, start + 24 * 3600_000L))
     }
 
     @Test

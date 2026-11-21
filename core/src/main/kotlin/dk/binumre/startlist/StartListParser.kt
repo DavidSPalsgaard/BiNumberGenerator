@@ -120,7 +120,6 @@ object StartListParser {
                         course = st.path("Course", "Name").text().ifEmpty { classCourse },
                         courseLength = st.path("Course", "Length").text().toDoubleOrNull()?.toInt() ?: classLength,
                         startName = startName,
-                        team = if (leg.isEmpty()) teamName else "$teamName · $leg",
                         teamName = teamName,
                         leg = leg,
                     )
@@ -214,7 +213,7 @@ object StartListParser {
                 club = r.get(Col.CLUB), cls = r.get(Col.CLS), bib = r.get(Col.BIB),
                 start = times.parse(r.get(Col.START)),
                 card = r.get(Col.CARD).filter { it.isDigit() }.toLongOrNull(),
-                course = r.get(Col.COURSE), startName = r.get(Col.START_NAME), team = r.get(Col.TEAM),
+                course = r.get(Col.COURSE), startName = r.get(Col.START_NAME), teamName = r.get(Col.TEAM),
             )
         }
     }

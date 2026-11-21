@@ -34,13 +34,11 @@ import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.sin
 
-/** Orienteringens farver: postflagets orange og hvide, kortets brune højdekurver, grønne skov og blå vand. */
+/** Orienteringens farver: postflagets orange og hvide, kortets brune højdekurver og grønne skov. */
 object OColors {
     val Orange = Color(0xFFEE6A1B)
-    val OrangeDark = Color(0xFFB84A08)
     val Contour = Color(0xFFA0602E)
     val Forest = Color(0xFF3B8C3A)
-    val Water = Color(0xFF2E8BC9)
     val Paper = Color(0xFFFBF8F3)
     val Ink = Color(0xFF231F1C)
 }

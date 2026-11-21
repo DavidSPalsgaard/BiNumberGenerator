@@ -35,7 +35,6 @@ object BibLayout {
     private const val ASCENT = 0.93
     private const val EM = 1.17
     private const val LEG_BAND = 16.0
-    private const val ROW = 7.5
     const val FOLD_SIZE = 14.0
     /** Standardhøjden af feltet til startnummeret (cifrene bliver ca. 44 mm høje). */
     private const val NUMBER_HEIGHT = 46.0

@@ -2,6 +2,7 @@ package dk.binumre
 
 import dk.binumre.startlist.Csv
 import dk.binumre.startlist.NameFormat
+import dk.binumre.startlist.StartListJson
 import dk.binumre.startlist.StartListParser
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
@@ -82,5 +83,22 @@ class StartListParserTest {
         assertEquals("10:30", clock(list.entries[0].start))
         assertEquals("10:30", clock(list.entries[1].start))
         assertTrue(list.entries.all { it.cls == "H21" })
+    }
+
+    @Test
+    fun csvHoldKolonneBlivetHoldnavn() {
+        val csv = "Navn,Klasse,Startnr,Hold\nAnna,Stafet,12,OK Ø 1\n"
+        val e = StartListParser.parse(csv.toByteArray(), zone, today).entries.single()
+        assertEquals("OK Ø 1", e.teamName)
+    }
+
+    @Test
+    fun aeldreProjektfilMedTeam() {
+        val o = org.json.JSONObject("""{"event":"X","entries":[{"given":"A","team":"OK Ø 1 · 2","leg":"2"},{"given":"B","team":"FIF"}]}""")
+        val (a, b) = StartListJson.fromJson(o).entries
+        assertEquals("OK Ø 1", a.teamName)
+        assertEquals("FIF", b.teamName)
+        // Gemmes igen uden det gamle felt
+        assertEquals(false, StartListJson.toJson(StartListJson.fromJson(o)).getJSONArray("entries").getJSONObject(0).has("team"))
     }
 }
