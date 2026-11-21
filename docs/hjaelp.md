@@ -40,7 +40,7 @@ Hent den nyeste udgave fra hjemmesiden. Pakken er en zip-fil, der indeholder:
 |---|---|
 | `Start BiNumreGenerator.bat` | Starter programmet |
 | `Program\BiNumreGenerator.exe` | Selve programmet – Java følger med, intet skal installeres |
-| `Installation\BiNumreGenerator-x.y.z.msi` | Installationsfil, hvis du hellere vil installere (startmenu og genvej, kræver ikke administrator) |
+| `Installation\BiNumreGenerator-x.y.z.msi` | Installationsfil, hvis du hellere vil installere (du vælger selv genvej i startmenuen og på skrivebordet; kræver ikke administrator) |
 | `Testfiler\` | Eksempler på startlister, et logo og en projektfil |
 | `TESTVEJLEDNING.txt` | Trin-for-trin afprøvning af funktionerne |
 | `LICENS.txt`, `Licenser\` | Ophavsret og licenser |

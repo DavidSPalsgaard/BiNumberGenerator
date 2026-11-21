@@ -5,7 +5,7 @@ Indhold
 -------
   Start BiNumreGenerator.bat   Starter programmet (samme som Program\BiNumreGenerator.exe)
   Program\                     Programmet med indbygget Java – intet skal installeres
-  Installation\                .msi-fil, hvis du hellere vil installere (startmenu og genvej,
+  Installation\                .msi-fil, hvis du hellere vil installere (du vælger selv genvej i startmenu og på skrivebord,
                                kræver ikke administrator)
   Testfiler\                   Startlister, logo og projektfil til afprøvningen nedenfor
   LICENS.txt, Licenser\        Ophavsret og licenser for de komponenter programmet bruger

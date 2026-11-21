@@ -82,6 +82,8 @@ jobs:
           fi
           cp ud/BiNumreGenerator-testpakke.zip "ud/BiNumreGenerator-$ver-windows.zip"
           cp desktop/build/compose/binaries/main/msi/*.msi "ud/BiNumreGenerator-$ver.msi"
+          # Samme version udgivet igen (rettelse) erstatter den tidligere udgave
+          gh release delete "v$ver" --yes --cleanup-tag || true
           gh release create "v$ver" --target "$GITHUB_SHA" "ud/BiNumreGenerator-$ver-windows.zip" "ud/BiNumreGenerator-$ver.msi" \
             --title "BiNumreGenerator $ver" \
             --notes "Windows: hent BiNumreGenerator-$ver.msi og installer (kræver ikke administrator), eller pak BiNumreGenerator-$ver-windows.zip ud og start Program\\BiNumreGenerator.exe. Java følger med. Windows viser måske \"Windows beskyttede din pc\": klik \"Flere oplysninger\" → \"Kør alligevel\"."

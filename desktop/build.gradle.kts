@@ -55,10 +55,19 @@ compose.desktop {
                 menuGroup = "BiNumreGenerator"
                 shortcut = true
                 dirChooser = true
+                // Installationen spørger om genvej på skrivebordet og i startmenuen (se nedenfor)
                 perUserInstall = true
                 // Samme id i alle versioner, så en ny version erstatter den gamle
                 upgradeUuid = "6f0c7a52-3c1e-4d1b-9a55-2b8e4f3d7c11"
             }
         }
+    }
+}
+
+// MSI: en side i installationen med afkrydsning for genvej på skrivebordet og i startmenuen
+// (jpackage --win-shortcut-prompt; Compose har ingen indstilling for det).
+tasks.withType<org.jetbrains.compose.desktop.application.tasks.AbstractJPackageTask>().configureEach {
+    if (targetFormat == org.jetbrains.compose.desktop.application.dsl.TargetFormat.Msi) {
+        freeArgs.add("--win-shortcut-prompt")
     }
 }

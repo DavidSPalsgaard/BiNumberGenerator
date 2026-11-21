@@ -25,8 +25,8 @@ Under **Releases → Seneste udgave** på GitHub ligger `BiNumreGenerator-testpa
 automatisk ved hver ændring på `main` (`.github/workflows/build.yml`). Pak den ud; den indeholder:
 - `Program\BiNumreGenerator.exe` (eller `Start BiNumreGenerator.bat`) – intet skal installeres;
   Java-runtime følger med i mappen.
-- `Installation\BiNumreGenerator-1.0.0.msi` – installerer i brugerens egen mappe med startmenu og
-  genvej (kræver ikke administrator).
+- `Installation\BiNumreGenerator-1.0.0.msi` – installerer i brugerens egen mappe; undervejs vælger man
+  selv genvej i startmenuen og på skrivebordet (kræver ikke administrator).
 - `Testfiler\` og `TESTVEJLEDNING.txt` – startlister (XML, CSV, Excel), logo og projektfil med en
   trin-for-trin afprøvning. Filerne ligger i `testpakke/` (XML-filerne i `core/src/test/resources/`),
   og en test sikrer, at de passer til vejledningen.
@@ -34,7 +34,8 @@ automatisk ved hver ændring på `main` (`.github/workflows/build.yml`). Pak den
 **Udgivne versioner** (fx `v1.0.0`) ligger også under Releases med `BiNumreGenerator-<version>.msi` og
 `BiNumreGenerator-<version>-windows.zip`. En ny version udgives ved at sætte `appVersion` i
 `desktop/build.gradle.kts` og enten skubbe et mærke med samme nummer (`git tag v1.0.0 && git push origin v1.0.0`) eller på GitHub vælge
-Actions → "Byg Windows-pakke" → "Run workflow" på `main` med "udgiv" slået til.
+Actions → "Byg Windows-pakke" → "Run workflow" på `main` med "udgiv" slået til. Udgives samme
+version igen, erstattes den tidligere udgave.
 
 Windows viser måske "Windows beskyttede din pc", fordi programmet ikke er kodesigneret endnu:
 klik "Flere oplysninger" → "Kør alligevel".
