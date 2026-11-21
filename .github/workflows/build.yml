@@ -1,7 +1,8 @@
 # Bygger og tester på Windows og lægger BiNumreGenerator-testpakke.zip under
 # GitHub → Releases → "Seneste udgave": programmet (kører uden installation), .msi-installationsfil,
 # testfiler og TESTVEJLEDNING.txt (indholdet kommer fra mappen testpakke/).
-# Et versionsmærke (fx v1.0.0) giver en rigtig udgave "BiNumreGenerator 1.0.0" med zip og .msi.
+# Et versionsmærke (fx v1.0.0) – eller "Run workflow" på main med "udgiv" slået til – giver en rigtig
+# udgave "BiNumreGenerator 1.0.0" med zip og .msi (versionen tages fra appVersion).
 name: Byg Windows-pakke
 
 on:
@@ -10,6 +11,11 @@ on:
     tags: ['v*']
   pull_request:
   workflow_dispatch:
+    inputs:
+      udgiv:
+        description: "Udgiv versionen fra appVersion som en rigtig udgave (kun fra main)"
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -66,15 +72,16 @@ jobs:
             --notes "Bygget automatisk fra main ($GITHUB_SHA). Hent BiNumreGenerator-testpakke.zip, pak den ud og læs TESTVEJLEDNING.txt."
 
       - name: Udgiv version
-        if: startsWith(github.ref, 'refs/tags/v')
+        if: startsWith(github.ref, 'refs/tags/v') || (github.event_name == 'workflow_dispatch' && inputs.udgiv && github.ref == 'refs/heads/main')
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          ver="${GITHUB_REF_NAME#v}"
-          app=$(sed -n 's/^val appVersion = "\(.*\)"/\1/p' desktop/build.gradle.kts)
-          [ "$app" = "$ver" ] || { echo "Mærket $GITHUB_REF_NAME passer ikke til appVersion $app i desktop/build.gradle.kts"; exit 1; }
+          ver=$(sed -n 's/^val appVersion = "\(.*\)"/\1/p' desktop/build.gradle.kts)
+          if [ "$GITHUB_REF_TYPE" = tag ] && [ "$GITHUB_REF_NAME" != "v$ver" ]; then
+            echo "Mærket $GITHUB_REF_NAME passer ikke til appVersion $ver i desktop/build.gradle.kts"; exit 1
+          fi
           cp ud/BiNumreGenerator-testpakke.zip "ud/BiNumreGenerator-$ver-windows.zip"
           cp desktop/build/compose/binaries/main/msi/*.msi "ud/BiNumreGenerator-$ver.msi"
-          gh release create "$GITHUB_REF_NAME" "ud/BiNumreGenerator-$ver-windows.zip" "ud/BiNumreGenerator-$ver.msi" \
+          gh release create "v$ver" --target "$GITHUB_SHA" "ud/BiNumreGenerator-$ver-windows.zip" "ud/BiNumreGenerator-$ver.msi" \
             --title "BiNumreGenerator $ver" \
             --notes "Windows: hent BiNumreGenerator-$ver.msi og installer (kræver ikke administrator), eller pak BiNumreGenerator-$ver-windows.zip ud og start Program\\BiNumreGenerator.exe. Java følger med. Windows viser måske \"Windows beskyttede din pc\": klik \"Flere oplysninger\" → \"Kør alligevel\"."

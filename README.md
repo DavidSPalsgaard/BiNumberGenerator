@@ -33,7 +33,8 @@ automatisk ved hver ændring på `main` (`.github/workflows/build.yml`). Pak den
 
 **Udgivne versioner** (fx `v1.0.0`) ligger også under Releases med `BiNumreGenerator-<version>.msi` og
 `BiNumreGenerator-<version>-windows.zip`. En ny version udgives ved at sætte `appVersion` i
-`desktop/build.gradle.kts` og skubbe et mærke med samme nummer: `git tag v1.0.0 && git push origin v1.0.0`.
+`desktop/build.gradle.kts` og enten skubbe et mærke med samme nummer (`git tag v1.0.0 && git push origin v1.0.0`) eller på GitHub vælge
+Actions → "Byg Windows-pakke" → "Run workflow" på `main` med "udgiv" slået til.
 
 Windows viser måske "Windows beskyttede din pc", fordi programmet ikke er kodesigneret endnu:
 klik "Flere oplysninger" → "Kør alligevel".
